@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0a0c" id="themeColor">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FastTrack">
+<title>FastTrack</title>
+<link rel="manifest" href='data:application/json,{"name":"FastTrack","short_name":"FastTrack","display":"standalone","background_color":"%230a0a0c","theme_color":"%230a0a0c","start_url":"."}'>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* DARK (default) */
+    --bg:#0a0a0c; --surface:#15171c; --surface-2:#1d2027; --surface-3:#262a33;
+    --line:rgba(255,255,255,.15); --line-2:rgba(255,255,255,.24);
+    --text:#f3f2ef; --muted:#969ba5; --muted-2:#646974;
+    --fire:#ff6a1a; --fire-2:#ff3d00; --water:#38bdf8; --good:#34d399; --warn:#fbbf24;
+    --display:'Oswald',sans-serif; --mono:'Space Mono',ui-monospace,monospace;
+    --nav-h:64px;
+    --bw:2px;          /* border width (advanced) */
+    --contrast:1;      /* content contrast (advanced) */
+    --fs:1;            /* font scale (advanced) */
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme="dark"]){
+      --bg:#f1f1ee; --surface:#ffffff; --surface-2:#f4f4f0; --surface-3:#e7e7e1;
+      --line:rgba(0,0,0,.17); --line-2:rgba(0,0,0,.28);
+      --text:#15161a; --muted:#5b606a; --muted-2:#a2a7b0;
+      --fire:#ef5a0c; --fire-2:#dc3a00; --water:#0284c7; --good:#059669; --warn:#d97706;
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#f1f1ee; --surface:#ffffff; --surface-2:#f4f4f0; --surface-3:#e7e7e1;
+    --line:rgba(0,0,0,.17); --line-2:rgba(0,0,0,.28);
+    --text:#15161a; --muted:#5b606a; --muted-2:#a2a7b0;
+    --fire:#ef5a0c; --fire-2:#dc3a00; --water:#0284c7; --good:#059669; --warn:#d97706;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:var(--display); font-weight:400;
+    font-size:calc(16px * var(--fs));
+    overflow-x:hidden; -webkit-font-smoothing:antialiased;
+    background-image:
+      radial-gradient(900px 500px at 80% -10%, rgba(255,106,26,.10), transparent 60%),
+      radial-gradient(700px 500px at -10% 110%, rgba(56,189,248,.06), transparent 60%);
+    background-attachment:fixed;
+  }
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.035;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+  #app{position:relative;z-index:1;max-width:480px;margin:0 auto;padding:0 18px calc(var(--nav-h) + env(safe-area-inset-bottom) + 24px);min-height:100%;filter:contrast(var(--contrast))}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top) + 18px) 0 10px}
+  .brand{display:flex;align-items:center;gap:9px}
+  .brand .logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--fire),var(--fire-2));display:grid;place-items:center;font-size:1.05em;box-shadow:0 6px 18px rgba(255,61,0,.35)}
+  .brand b{font-weight:700;letter-spacing:.5px;font-size:1.19em}
+  .brand b span{color:var(--fire)}
+  .streak-pill{display:flex;align-items:center;gap:7px;background:var(--surface);border:var(--bw) solid var(--line);padding:7px 13px;border-radius:999px}
+  .streak-pill .n{font-family:var(--mono);font-weight:700;font-size:.94em}
+  .streak-pill small{color:var(--muted);font-size:.62em;text-transform:uppercase;letter-spacing:1px}
+
+  .card{background:var(--surface);border:var(--bw) solid var(--line);border-radius:20px;padding:18px}
+  .card + .card{margin-top:14px}
+  .card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .card-h h3{font-size:.75em;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted)}
+
+  .timer-card{text-align:center;padding:26px 18px 22px;background:radial-gradient(120% 90% at 50% 0%, rgba(255,106,26,.08), transparent 55%), var(--surface)}
+  .ring-wrap{position:relative;width:262px;height:262px;margin:6px auto 4px;max-width:80vw;max-height:80vw}
+  .ring-wrap svg{transform:rotate(-90deg);width:100%;height:100%}
+  .ring-bg{fill:none;stroke:var(--surface-3);stroke-width:14}
+  .ring-fg{fill:none;stroke:url(#grad);stroke-width:14;stroke-linecap:round;transition:stroke-dashoffset .6s cubic-bezier(.4,0,.2,1);filter:drop-shadow(0 0 8px rgba(255,106,26,.45))}
+  .ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+  .ring-state{font-size:.66em;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .ring-state.active{color:var(--fire)} .ring-state.done{color:var(--good)}
+  .ring-time{font-family:var(--mono);font-weight:700;font-size:2.55em;line-height:1.05;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+  .ring-sub{font-size:.75em;color:var(--muted);letter-spacing:.3px}
+  .ring-sub b{color:var(--text);font-family:var(--mono);font-weight:400}
+
+  .window-row{display:flex;justify-content:center;gap:22px;margin:14px 0 4px}
+  .window-row .wi{text-align:center}
+  .window-row .wi .lab{font-size:.59em;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted-2);margin-bottom:3px}
+  .window-row .wi .val{font-family:var(--mono);font-size:.81em}
+
+  .btn{display:block;width:100%;border:none;border-radius:15px;padding:16px;font-family:var(--display);font-weight:600;font-size:.94em;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:transform .12s,filter .2s;color:#fff}
+  .btn:active{transform:scale(.975)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn-fire{background:linear-gradient(135deg,var(--fire),var(--fire-2));box-shadow:0 8px 24px rgba(255,61,0,.32)}
+  .btn-stop{background:var(--surface-3);border:var(--bw) solid var(--line-2);color:var(--text)}
+  .btn-ghost{background:transparent;border:var(--bw) solid var(--line-2);color:var(--text)}
+  .btn-sm{padding:11px;font-size:.75em;border-radius:12px}
+  .mt{margin-top:14px}
+
+  .proto-grid{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;-ms-overflow-style:none;scrollbar-width:none}
+  .proto-grid::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;background:var(--surface-2);border:var(--bw) solid var(--line);border-radius:13px;padding:10px 15px;cursor:pointer;text-align:center;transition:.18s;min-width:64px}
+  .chip.sel{border-color:var(--fire);background:rgba(255,106,26,.12)}
+  .chip .name{font-weight:600;font-size:.94em} .chip.sel .name{color:var(--fire)}
+  .chip .sub{font-size:.59em;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-top:1px}
+
+  .water-bar{height:12px;background:var(--surface-3);border-radius:999px;overflow:hidden;margin:4px 0 12px}
+  .water-fill{height:100%;background:linear-gradient(90deg,#0ea5e9,var(--water));border-radius:999px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+  .water-stat{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+  .water-stat .big{font-family:var(--mono);font-size:1.25em} .water-stat .big span{color:var(--muted);font-size:.65em}
+  .water-btns{display:flex;gap:8px}
+  .water-btns .btn{background:rgba(56,189,248,.12);border:var(--bw) solid rgba(56,189,248,.3);color:var(--water)}
+
+  .row{display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:var(--bw) solid var(--line)}
+  .row:last-child{border-bottom:none}
+  .row .ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:1.05em;flex:0 0 auto;background:var(--surface-2)}
+  .row .meta{flex:1;min-width:0}
+  .row .meta .t{font-size:.9em;font-weight:500}
+  .row .meta .s{font-size:.72em;color:var(--muted);margin-top:1px}
+  .row .right{text-align:right;flex:0 0 auto}
+  .row .right .v{font-family:var(--mono);font-size:.875em}
+  .row .right .badge{font-size:.56em;letter-spacing:.8px;text-transform:uppercase;padding:2px 7px;border-radius:6px;display:inline-block;margin-top:3px}
+  .badge.ok{background:rgba(52,211,153,.16);color:var(--good)}
+  .badge.short{background:rgba(251,191,36,.16);color:var(--warn)}
+  .badge.fasted{background:rgba(255,106,26,.16);color:var(--fire)}
+
+  .heat{display:flex;gap:5px;margin-bottom:4px}
+  .heat .d{flex:1;aspect-ratio:1/2.2;border-radius:5px;background:var(--surface-3)}
+  .heat .d.l1{background:rgba(255,106,26,.3)} .heat .d.l2{background:rgba(255,106,26,.58)} .heat .d.l3{background:var(--fire)}
+  .heat-labels{display:flex;justify-content:space-between;font-size:.56em;color:var(--muted-2);letter-spacing:.5px;margin-top:6px}
+
+  .empty{text-align:center;color:var(--muted);font-size:.81em;padding:24px 8px}
+  .empty .em{font-size:2.3em;display:block;margin-bottom:8px;opacity:.6}
+
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .stat-box{background:var(--surface-2);border:var(--bw) solid var(--line);border-radius:15px;padding:14px}
+  .stat-box .v{font-family:var(--mono);font-size:1.45em;font-weight:700}
+  .stat-box .l{font-size:.625em;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-top:2px}
+
+  label.fl{display:block;font-size:.69em;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:14px 0 7px}
+  input.fi,select.fi,textarea.fi{width:100%;background:var(--surface-2);border:var(--bw) solid var(--line);border-radius:12px;padding:13px;color:var(--text);font-family:var(--display);font-size:.94em}
+  input.fi:focus,select.fi:focus,textarea.fi:focus{outline:none;border-color:var(--fire)}
+  textarea.fi{resize:none;min-height:62px}
+  .seg{display:flex;gap:6px;flex-wrap:wrap}
+  .seg .chip{flex:1 0 auto;min-width:0}
+
+  .stepper{display:flex;align-items:center;gap:10px}
+  .stepper button{width:46px;height:46px;border-radius:12px;background:var(--surface-2);border:var(--bw) solid var(--line);color:var(--text);font-size:1.4em;cursor:pointer;font-family:var(--mono)}
+  .stepper .sval{flex:1;text-align:center;font-family:var(--mono);font-size:1.1em}
+
+  .nav{position:fixed;bottom:0;left:0;right:0;z-index:20;height:calc(var(--nav-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);
+    background:color-mix(in srgb, var(--bg) 86%, transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:var(--bw) solid var(--line);display:flex}
+  .nav button{flex:1;background:none;border:none;color:var(--muted-2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;font-family:var(--display);transition:color .2s}
+  .nav button .ni{font-size:1.19em} .nav button .nl{font-size:.59em;letter-spacing:.8px;text-transform:uppercase;font-weight:500}
+  .nav button.on{color:var(--fire)}
+
+  .scrim{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:none;align-items:flex-end;justify-content:center}
+  .scrim.show{display:flex}
+  .sheet{background:var(--surface);border:var(--bw) solid var(--line);border-bottom:none;border-radius:24px 24px 0 0;width:100%;max-width:480px;padding:22px 18px calc(env(safe-area-inset-bottom) + 22px);animation:up .28s cubic-bezier(.2,.8,.2,1);max-height:88vh;overflow-y:auto}
+  @keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .sheet h2{font-size:1.13em;font-weight:600;margin-bottom:4px}
+  .sheet .sd{font-size:.78em;color:var(--muted);margin-bottom:14px}
+  .rate{display:flex;gap:8px;justify-content:space-between}
+  .rate .dot{flex:1;aspect-ratio:1;border-radius:12px;background:var(--surface-2);border:var(--bw) solid var(--line);display:grid;place-items:center;font-size:1.25em;cursor:pointer;transition:.15s}
+  .rate .dot.sel{border-color:var(--fire);background:rgba(255,106,26,.14);transform:scale(1.04)}
+
+  .toast{position:fixed;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface-3);border:var(--bw) solid var(--line-2);color:var(--text);padding:11px 18px;border-radius:12px;font-size:.81em;z-index:60;opacity:0;transition:.3s;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .fade{animation:fade .4s ease}@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="brand"><div class="logo">🔥</div><b>FAST<span>TRACK</span></b></div>
+    <div class="streak-pill"><span>🔥</span><span class="n" id="streakN">0</span><small id="streakLab">dana</small></div>
+  </div>
+  <div id="view"></div>
+</div>
+<nav class="nav" id="nav"></nav>
+<div class="scrim" id="scrim"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================================
+   STORE — jedini sloj koji dira podatke. Zamijeni unutrašnjost u v2 (API/sync).
+   ========================================================================= */
+const Store=(function(){
+  const KEY='fasttrack:db', SCHEMA=1; let db=null, mem=false;
+  const uuid=()=>(crypto.randomUUID?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==='x'?r:(r&0x3|0x8)).toString(16)}));
+  const nowISO=()=>new Date().toISOString();
+  const detectLang=()=>{const l=(navigator.language||'en').toLowerCase();return /^(hr|bs|sr|sh|me)/.test(l)?'hr':'en';};
+  function defaults(){return{
+    schema:SCHEMA, user:{id:uuid(),name:'',createdAt:nowISO()},
+    settings:{protocol:'16:8',customHours:16,waterGoalMl:2500,glassMl:250,lang:detectLang(),
+      ui:{theme:'auto',fontScale:1,border:'regular',contrast:'normal'}},
+    fasts:[], water:{}, activities:[], updatedAt:nowISO()
+  };}
+  function normalize(){const d=defaults();
+    db.user=Object.assign({},d.user,db.user||{});
+    db.settings=Object.assign({},d.settings,db.settings||{});
+    db.settings.ui=Object.assign({},d.settings.ui,db.settings.ui||{});
+    if(!db.settings.lang) db.settings.lang=detectLang();
+    db.fasts=db.fasts||[]; db.water=db.water||{}; db.activities=db.activities||[]; db.schema=SCHEMA;}
+  function load(){try{const raw=localStorage.getItem(KEY);db=raw?JSON.parse(raw):defaults();}catch(e){mem=true;db=defaults();}normalize();return db;}
+  function save(){db.updatedAt=nowISO();if(mem)return;try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){mem=true;}}
+  return{
+    uuid,nowISO,init:load,get db(){return db;},get memoryOnly(){return mem;},
+    user(){return db.user;}, setUserName(n){db.user.name=n;save();},
+    settings(){return db.settings;}, setSettings(p){Object.assign(db.settings,p);save();},
+    setUI(p){Object.assign(db.settings.ui,p);save();},
+    activeFast(){return db.fasts.find(f=>f.status==='active')||null;},
+    startFast(h){if(this.activeFast())return null;const f={id:uuid(),startAt:nowISO(),endAt:null,targetHours:h,status:'active',energy:null,mood:null,note:'',createdAt:nowISO(),updatedAt:nowISO()};db.fasts.push(f);save();return f;},
+    endFast(id,patch){const f=db.fasts.find(x=>x.id===id);if(!f)return;f.endAt=nowISO();f.status='completed';if(patch)Object.assign(f,patch);f.updatedAt=nowISO();save();},
+    fasts(){return db.fasts.filter(f=>f.status!=='active').sort((a,b)=>new Date(b.startAt)-new Date(a.startAt));},
+    getWater(k){return db.water[k]?db.water[k].ml:0;}, addWater(k,ml){const c=this.getWater(k);db.water[k]={ml:Math.max(0,c+ml),updatedAt:nowISO()};save();},
+    addActivity(a){const x=Object.assign({id:uuid(),createdAt:nowISO(),updatedAt:nowISO()},a);db.activities.push(x);save();return x;},
+    deleteActivity(id){db.activities=db.activities.filter(a=>a.id!==id);save();},
+    activities(){return db.activities.slice().sort((a,b)=>(b.date+b.createdAt).localeCompare(a.date+a.createdAt));},
+    export(){return JSON.stringify(db,null,2);},
+    import(json){const i=JSON.parse(json);if(!i.schema)throw new Error('bad');db=i;normalize();save();}
+  };
+})();
+
+/* ============================ I18N ============================ */
+const DICT={
+  hr:{navFast:'Post',navHistory:'Povijest',navTraining:'Trening',navSettings:'Postavke',streakDays:'dana',
+    ready:'Spreman',fasting:'Post u tijeku',goalReached:'Cilj dostignut!',goal:'cilj',remaining:'preostalo',aboveGoal:'iznad cilja',
+    fastLabel:'Post',eatingWindow:'Prozor jela',goalAt:'Cilj u',protocol:'Protokol',endFast:'Završi post',startFast:'Započni post',fastStarted:'Post započet 🔥',youPick:'ti biraš',
+    hydrationToday:'Hidratacija · danas',glass:'čaša',minus:'−',
+    niceDone:'Bravo! 🔥',fastEnded:'Post završen',duration:'Trajanje',howFeel:'Kako se osjećaš?',energyLevel:'Razina energije',noteOpt:'Bilješka (opcionalno)',notePh:'npr. lagano, malo gladi navečer...',saveEnd:'Spremi i završi',cancel:'Odustani',fastSaved:'Post spremljen ✓',
+    customProtocol:'Custom protokol',howManyHours:'Koliko sati želiš postiti?',fastingHours:'Sati posta',save:'Spremi',min:'min',
+    overview:'Pregled',streakStat:'🔥 Streak',totalFasts:'Ukupno posta',average:'Prosjek',goalsReached:'Cilj dostignut',last14:'Zadnjih 14 dana',today:'danas',fastHistory:'Povijest posta',goalBadge:'cilj ✓',shortBadge:'kraće',noFasts:'Još nema završenih postova.<br>Započni prvi na kartici Post.',
+    training:'Trening',total:'Ukupno',fastedStat:'🔥 Na prazno',addTraining:'+ Dodaj trening',recentActivity:'Zadnje aktivnosti',noTraining:'Još nema treninga.',deleteTraining:'Obrisati ovaj trening?',fastedBadge:'fasted',
+    addTrainingTitle:'Dodaj trening',type:'Tip',durationMin:'Trajanje (min)',date:'Datum',trainedFasted:'🔥 Trenirao/la na prazno (fasted)',saveTraining:'Spremi trening',trainingSaved:'Trening spremljen 💪',trainPh:'npr. dobar pump, jaka energija...',
+    act_strength:'Trening snage',act_running:'Trčanje',act_cycling:'Bicikl',act_walking:'Hodanje',act_cardio:'Kardio',act_other:'Ostalo',
+    profile:'Profil',nameNick:'Ime / nadimak',namePh:'npr. Pho',savedForGroups:'spremljen za buduće grupe',
+    defaultProtocol:'Zadani protokol',hydration:'Hidratacija',dailyGoalMl:'Dnevni cilj (ml)',glassSizeMl:'Veličina čaše (ml)',language:'Jezik',
+    data:'Podaci',exportBtn:'⬇ Export (backup JSON)',importBtn:'⬆ Import iz fajla',resetAll:'Resetiraj sve',memoryWarn:'⚠ Spremanje na disk nije dostupno u ovom pregledu — podaci se neće zadržati. Radi normalno kad je app hostan ili spremljen kao fajl.',
+    advanced:'Napredno · izgled',footer:'FastTrack v1 · svatko za sebe',saved:'Spremljeno',
+    advSub:'Privremene UI postavke za čitkost',theme:'Tema',themeAuto:'Auto',themeLight:'Svijetla',themeDark:'Tamna',textSize:'Veličina teksta',contrast:'Kontrast',contrastLow:'Niži',contrastNormal:'Normalan',contrastHigh:'Viši',borderThickness:'Debljina rubova',borderThin:'Tanki',borderRegular:'Normalni',borderThick:'Debeli',done:'Gotovo',
+    resetTitle:'Resetirati sve?',resetDesc:'Ovo briše SVE podatke i ne može se poništiti. Za potvrdu upiši riječ:',resetWord:'RESETIRAJ',deleteAll:'Obriši sve',
+    today2:'Danas',yesterday:'Jučer'},
+  en:{navFast:'Fast',navHistory:'History',navTraining:'Training',navSettings:'Settings',streakDays:'days',
+    ready:'Ready',fasting:'Fasting',goalReached:'Goal reached!',goal:'goal',remaining:'remaining',aboveGoal:'above goal',
+    fastLabel:'Fast',eatingWindow:'Eating window',goalAt:'Goal at',protocol:'Protocol',endFast:'End fast',startFast:'Start fast',fastStarted:'Fast started 🔥',youPick:'you pick',
+    hydrationToday:'Hydration · today',glass:'glass',minus:'−',
+    niceDone:'Nice! 🔥',fastEnded:'Fast ended',duration:'Duration',howFeel:'How do you feel?',energyLevel:'Energy level',noteOpt:'Note (optional)',notePh:'e.g. easy, a bit hungry in the evening...',saveEnd:'Save & end',cancel:'Cancel',fastSaved:'Fast saved ✓',
+    customProtocol:'Custom protocol',howManyHours:'How many hours do you want to fast?',fastingHours:'Fasting hours',save:'Save',min:'min',
+    overview:'Overview',streakStat:'🔥 Streak',totalFasts:'Total fasts',average:'Average',goalsReached:'Goals reached',last14:'Last 14 days',today:'today',fastHistory:'Fast history',goalBadge:'goal ✓',shortBadge:'short',noFasts:'No completed fasts yet.<br>Start your first one on the Fast tab.',
+    training:'Training',total:'Total',fastedStat:'🔥 Fasted',addTraining:'+ Add training',recentActivity:'Recent activity',noTraining:'No training yet.',deleteTraining:'Delete this training?',fastedBadge:'fasted',
+    addTrainingTitle:'Add training',type:'Type',durationMin:'Duration (min)',date:'Date',trainedFasted:'🔥 Trained fasted',saveTraining:'Save training',trainingSaved:'Training saved 💪',trainPh:'e.g. good pump, strong energy...',
+    act_strength:'Strength',act_running:'Running',act_cycling:'Cycling',act_walking:'Walking',act_cardio:'Cardio',act_other:'Other',
+    profile:'Profile',nameNick:'Name / nickname',namePh:'e.g. Pho',savedForGroups:'saved for future groups',
+    defaultProtocol:'Default protocol',hydration:'Hydration',dailyGoalMl:'Daily goal (ml)',glassSizeMl:'Glass size (ml)',language:'Language',
+    data:'Data',exportBtn:'⬇ Export (backup JSON)',importBtn:'⬆ Import from file',resetAll:'Reset everything',memoryWarn:'⚠ Disk storage is unavailable in this preview — data will not persist. Works normally once the app is hosted or saved as a file.',
+    advanced:'Advanced · appearance',footer:'FastTrack v1 · solo mode',saved:'Saved',
+    advSub:'Temporary UI settings for readability',theme:'Theme',themeAuto:'Auto',themeLight:'Light',themeDark:'Dark',textSize:'Text size',contrast:'Contrast',contrastLow:'Lower',contrastNormal:'Normal',contrastHigh:'Higher',borderThickness:'Border thickness',borderThin:'Thin',borderRegular:'Regular',borderThick:'Thick',done:'Done',
+    resetTitle:'Reset everything?',resetDesc:'This deletes ALL data and cannot be undone. Type the word to confirm:',resetWord:'RESET',deleteAll:'Delete everything',
+    today2:'Today',yesterday:'Yesterday'}
+};
+const lang=()=>Store.settings().lang;
+const t=k=>{const d=DICT[lang()]||DICT.en;return (k in d)?d[k]:(DICT.en[k]??k);};
+const locale=()=>lang()==='hr'?'hr-HR':'en-GB';
+
+/* ============================ HELPERS ============================ */
+const $=s=>document.querySelector(s);
+const view=$('#view');
+const PROTOCOLS=[{id:'16:8',h:16,sub:'16h'},{id:'18:6',h:18,sub:'18h'},{id:'20:4',h:20,sub:'20h'},{id:'OMAD',h:23,sub:'23h'},{id:'custom',h:null,sub:'custom'}];
+const ACT_TYPES=[{k:'strength',e:'🏋️'},{k:'running',e:'🏃'},{k:'cycling',e:'🚴'},{k:'walking',e:'🚶'},{k:'cardio',e:'🤸'},{k:'other',e:'⚡'}];
+const MOODS=['😣','😕','😐','🙂','😄'];
+const pad=n=>String(n).padStart(2,'0');
+const dateKey=d=>{const x=new Date(d);return x.getFullYear()+'-'+pad(x.getMonth()+1)+'-'+pad(x.getDate());};
+const hoursBetween=(a,b)=>(new Date(b)-new Date(a))/3600000;
+function fmtDur(ms){const tot=Math.max(0,Math.floor(ms/1000));return pad(Math.floor(tot/3600))+':'+pad(Math.floor((tot%3600)/60))+':'+pad(tot%60);}
+function fmtH(h){const hh=Math.floor(h);return hh+'h '+pad(Math.round((h-hh)*60))+'m';}
+function targetHours(){const s=Store.settings();if(s.protocol==='custom')return s.customHours;const p=PROTOCOLS.find(p=>p.id===s.protocol);return p?p.h:16;}
+function relDay(d){const k=dateKey(d),tk=dateKey(new Date()),y=dateKey(new Date(Date.now()-864e5));
+  if(k===tk)return t('today2');if(k===y)return t('yesterday');return new Date(d).toLocaleDateString(locale(),{weekday:'short',day:'numeric',month:'short'});}
+let toastT;function toast(m){const el=$('#toast');el.textContent=m;el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),1900);}
+function computeStreak(){const g=new Set();Store.fasts().forEach(f=>{if(f.endAt&&hoursBetween(f.startAt,f.endAt)>=f.targetHours)g.add(dateKey(f.startAt));});
+  let s=0,cur=new Date();if(!g.has(dateKey(cur)))cur=new Date(Date.now()-864e5);while(g.has(dateKey(cur))){s++;cur=new Date(cur.getTime()-864e5);}return s;}
+function refreshStreak(){$('#streakN').textContent=computeStreak();$('#streakLab').textContent=t('streakDays');}
+
+/* ============================ APPLY UI (theme/font/border/contrast) ====== */
+function applyUI(){
+  const ui=Store.settings().ui, root=document.documentElement;
+  root.setAttribute('data-theme',ui.theme);
+  root.style.setProperty('--fs',ui.fontScale);
+  root.style.setProperty('--bw',({thin:'1px',regular:'2px',thick:'3px'})[ui.border]||'2px');
+  root.style.setProperty('--contrast',({low:'.9',normal:'1',high:'1.18'})[ui.contrast]||'1');
+  document.querySelector('html').setAttribute('lang',lang());
+  let resolved=ui.theme;
+  if(resolved==='auto')resolved=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';
+  $('#themeColor').setAttribute('content',resolved==='light'?'#f1f1ee':'#0a0a0c');
+}
+
+/* ============================ TIMER VIEW ============================ */
+function renderTimer(){
+  const s=Store.settings(),active=Store.activeFast(),tH=active?active.targetHours:targetHours();
+  const wk=dateKey(new Date()),water=Store.getWater(wk),goal=s.waterGoalMl,wpct=Math.min(100,Math.round(water/goal*100)),C=2*Math.PI*118;
+  view.innerHTML=`
+    <div class="card timer-card fade">
+      <div class="ring-wrap"><svg viewBox="0 0 262 262">
+        <defs><linearGradient id="grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ff8a3d"/><stop offset="100%" stop-color="#ff3d00"/></linearGradient></defs>
+        <circle class="ring-bg" cx="131" cy="131" r="118"/>
+        <circle class="ring-fg" id="ringFg" cx="131" cy="131" r="118" stroke-dasharray="${C}" stroke-dashoffset="${C}"/>
+      </svg>
+        <div class="ring-center">
+          <div class="ring-state" id="ringState">${active?t('fasting'):t('ready')}</div>
+          <div class="ring-time" id="ringTime">00:00:00</div>
+          <div class="ring-sub" id="ringSub">${t('goal')} ${tH}h</div>
+        </div></div>
+      <div class="window-row">
+        <div class="wi"><div class="lab">${t('fastLabel')}</div><div class="val">${tH}h</div></div>
+        <div class="wi"><div class="lab">${t('eatingWindow')}</div><div class="val">${Math.max(0,24-tH)}h</div></div>
+        <div class="wi"><div class="lab">${active?t('goalAt'):t('protocol')}</div><div class="val" id="endVal">${active?'':s.protocol}</div></div>
+      </div>
+      ${active?`<button class="btn btn-stop mt" id="endBtn">${t('endFast')}</button>`:`<button class="btn btn-fire mt" id="startBtn">${t('startFast')}</button>`}
+    </div>
+    ${active?'':`<div class="card fade"><div class="card-h"><h3>${t('protocol')}</h3></div>
+      <div class="proto-grid" id="protoGrid">${PROTOCOLS.map(p=>`<div class="chip ${s.protocol===p.id?'sel':''}" data-p="${p.id}"><div class="name">${p.id}</div><div class="sub">${p.id==='custom'?(s.protocol==='custom'?s.customHours+'h':t('youPick')):p.sub}</div></div>`).join('')}</div></div>`}
+    <div class="card fade"><div class="card-h"><h3>${t('hydrationToday')}</h3></div>
+      <div class="water-stat"><div class="big">${(water/1000).toFixed(2)} <span>/ ${(goal/1000).toFixed(1)} L</span></div></div>
+      <div class="water-bar"><div class="water-fill" style="width:${wpct}%"></div></div>
+      <div class="water-btns">
+        <button class="btn btn-sm" data-w="${s.glassMl}">+ ${t('glass')} (${s.glassMl}ml)</button>
+        <button class="btn btn-sm" data-w="500">+ 500ml</button>
+        <button class="btn btn-sm" data-w="-${s.glassMl}">${t('minus')}</button></div></div>`;
+  if(active){$('#endBtn').onclick=()=>openEndSheet(active);}
+  else{$('#startBtn').onclick=()=>{Store.startFast(targetHours());toast(t('fastStarted'));render('timer');};
+    $('#protoGrid').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{if(c.dataset.p==='custom'){openCustomSheet();return;}Store.setSettings({protocol:c.dataset.p});render('timer');});}
+  view.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{Store.addWater(wk,parseInt(b.dataset.w,10));render('timer');});
+  tick();
+}
+function tick(){const active=Store.activeFast(),ring=$('#ringFg');if(!ring)return;const C=2*Math.PI*118;
+  if(active){const el=Date.now()-new Date(active.startAt),tm=active.targetHours*3600000,pct=Math.min(1,el/tm);
+    ring.style.strokeDashoffset=C*(1-pct);$('#ringTime').textContent=fmtDur(el);
+    const st=$('#ringState'),sub=$('#ringSub'),ev=$('#endVal');
+    if(el>=tm){st.textContent=t('goalReached');st.className='ring-state done';sub.textContent='+'+fmtDur(el-tm)+' '+t('aboveGoal');}
+    else{st.textContent=t('fasting');st.className='ring-state active';sub.innerHTML=t('remaining')+' <b>'+fmtDur(tm-el)+'</b>';}
+    const end=new Date(new Date(active.startAt).getTime()+tm);if(ev)ev.textContent=pad(end.getHours())+':'+pad(end.getMinutes());}
+  else ring.style.strokeDashoffset=C;}
+
+/* ============================ SHEETS ============================ */
+function openEndSheet(fast){const el=Date.now()-new Date(fast.startAt),reached=el>=fast.targetHours*3600000;let mood=null,energy=null;
+  openSheet(`<h2>${reached?t('niceDone'):t('fastEnded')}</h2>
+    <div class="sd">${t('duration')}: ${fmtDur(el)} · ${t('goal')} ${fast.targetHours}h ${reached?'✓':''}</div>
+    <label class="fl">${t('howFeel')}</label><div class="rate" id="moodRate">${MOODS.map((m,i)=>`<div class="dot" data-i="${i}">${m}</div>`).join('')}</div>
+    <label class="fl">${t('energyLevel')}</label><div class="rate" id="enRate">${[1,2,3,4,5].map(i=>`<div class="dot" data-i="${i}">${i}</div>`).join('')}</div>
+    <label class="fl">${t('noteOpt')}</label><textarea class="fi" id="noteIn" placeholder="${t('notePh')}"></textarea>
+    <button class="btn btn-fire mt" id="saveEnd">${t('saveEnd')}</button><button class="btn btn-ghost mt" id="cancelEnd">${t('cancel')}</button>`);
+  $('#moodRate').querySelectorAll('.dot').forEach(d=>d.onclick=()=>{mood=+d.dataset.i;$('#moodRate').querySelectorAll('.dot').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');});
+  $('#enRate').querySelectorAll('.dot').forEach(d=>d.onclick=()=>{energy=+d.dataset.i;$('#enRate').querySelectorAll('.dot').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');});
+  $('#cancelEnd').onclick=closeSheet;
+  $('#saveEnd').onclick=()=>{Store.endFast(fast.id,{mood,energy,note:$('#noteIn').value.trim()});closeSheet();toast(t('fastSaved'));refreshStreak();render('timer');};}
+function openCustomSheet(){const s=Store.settings();
+  openSheet(`<h2>${t('customProtocol')}</h2><div class="sd">${t('howManyHours')}</div>
+    <label class="fl">${t('fastingHours')}</label><input class="fi" id="customH" type="number" min="1" max="48" value="${s.customHours}">
+    <button class="btn btn-fire mt" id="saveCustom">${t('save')}</button>`);
+  $('#saveCustom').onclick=()=>{const h=Math.min(48,Math.max(1,parseInt($('#customH').value,10)||16));Store.setSettings({protocol:'custom',customHours:h});closeSheet();render(currentTab);};}
+
+/* ============================ HISTORY ============================ */
+function renderHistory(){
+  const fasts=Store.fasts(),done=fasts.filter(f=>f.endAt),totalH=done.reduce((a,f)=>a+hoursBetween(f.startAt,f.endAt),0),
+    reached=done.filter(f=>hoursBetween(f.startAt,f.endAt)>=f.targetHours).length,avg=done.length?totalH/done.length:0;
+  const days=[];for(let i=13;i>=0;i--){const d=new Date(Date.now()-i*864e5),k=dateKey(d),f=done.find(x=>dateKey(x.startAt)===k);let lvl=0;
+    if(f){const h=hoursBetween(f.startAt,f.endAt);lvl=h>=f.targetHours?3:h>=f.targetHours*0.75?2:1;}days.push({lvl,wd:d.toLocaleDateString(locale(),{weekday:'narrow'})});}
+  view.innerHTML=`
+    <div class="card fade"><div class="card-h"><h3>${t('overview')}</h3></div><div class="stat-grid">
+      <div class="stat-box"><div class="v">${computeStreak()}</div><div class="l">${t('streakStat')}</div></div>
+      <div class="stat-box"><div class="v">${done.length}</div><div class="l">${t('totalFasts')}</div></div>
+      <div class="stat-box"><div class="v">${avg?fmtH(avg):'—'}</div><div class="l">${t('average')}</div></div>
+      <div class="stat-box"><div class="v">${reached}</div><div class="l">${t('goalsReached')}</div></div></div></div>
+    <div class="card fade"><div class="card-h"><h3>${t('last14')}</h3></div>
+      <div class="heat">${days.map(d=>`<div class="d ${d.lvl?'l'+d.lvl:''}"></div>`).join('')}</div>
+      <div class="heat-labels"><span>${days[0].wd}</span><span>${t('today')}</span></div></div>
+    <div class="card fade"><div class="card-h"><h3>${t('fastHistory')}</h3></div>
+      ${done.length?done.map(f=>{const h=hoursBetween(f.startAt,f.endAt),ok=h>=f.targetHours;
+        return `<div class="row"><div class="ic">${ok?'🔥':'⏳'}</div>
+          <div class="meta"><div class="t">${relDay(f.startAt)} · ${f.targetHours}h ${t('goal')}</div>
+            <div class="s">${MOODS[f.mood]??''} ${f.note?('· '+f.note):''}</div></div>
+          <div class="right"><div class="v">${fmtH(h)}</div><span class="badge ${ok?'ok':'short'}">${ok?t('goalBadge'):t('shortBadge')}</span></div></div>`;}).join('')
+        :`<div class="empty"><span class="em">📭</span>${t('noFasts')}</div>`}</div>`;
+}
+
+/* ============================ ACTIVITY ============================ */
+function renderActivity(){
+  const acts=Store.activities(),fc=acts.filter(a=>a.fasted).length;
+  view.innerHTML=`
+    <div class="card fade"><div class="card-h"><h3>${t('training')}</h3></div><div class="stat-grid">
+      <div class="stat-box"><div class="v">${acts.length}</div><div class="l">${t('total')}</div></div>
+      <div class="stat-box"><div class="v">${fc}</div><div class="l">${t('fastedStat')}</div></div></div>
+      <button class="btn btn-fire mt" id="addAct">${t('addTraining')}</button></div>
+    <div class="card fade"><div class="card-h"><h3>${t('recentActivity')}</h3></div>
+      ${acts.length?acts.map(a=>{const e=(ACT_TYPES.find(x=>x.k===a.type)||{e:'⚡'}).e;
+        return `<div class="row" data-id="${a.id}"><div class="ic">${e}</div>
+          <div class="meta"><div class="t">${t('act_'+a.type)}</div><div class="s">${relDay(a.date)} · ${a.durationMin} ${t('min')}${a.note?(' · '+a.note):''}</div></div>
+          <div class="right">${a.fasted?`<span class="badge fasted">${t('fastedBadge')}</span>`:''}</div></div>`;}).join('')
+        :`<div class="empty"><span class="em">💪</span>${t('noTraining')}</div>`}</div>`;
+  $('#addAct').onclick=openActivitySheet;
+  view.querySelectorAll('.row[data-id]').forEach(r=>r.onclick=()=>{if(confirm(t('deleteTraining'))){Store.deleteActivity(r.dataset.id);render('activity');}});
+}
+function openActivitySheet(){let type='strength',fasted=!!Store.activeFast();
+  openSheet(`<h2>${t('addTrainingTitle')}</h2>
+    <label class="fl">${t('type')}</label><div class="seg" id="actTypes">${ACT_TYPES.map(x=>`<div class="chip ${x.k===type?'sel':''}" data-t="${x.k}"><div class="name" style="font-size:.85em">${x.e} ${t('act_'+x.k)}</div></div>`).join('')}</div>
+    <label class="fl">${t('durationMin')}</label><input class="fi" id="actDur" type="number" min="1" value="45">
+    <label class="fl">${t('date')}</label><input class="fi" id="actDate" type="date" value="${dateKey(new Date())}">
+    <div class="seg mt"><div class="chip ${fasted?'sel':''}" id="fastedChip" style="flex:1"><div class="name" style="font-size:.9em">${t('trainedFasted')}</div></div></div>
+    <label class="fl">${t('noteOpt')}</label><textarea class="fi" id="actNote" placeholder="${t('trainPh')}"></textarea>
+    <button class="btn btn-fire mt" id="saveAct">${t('saveTraining')}</button>`);
+  $('#actTypes').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{type=c.dataset.t;$('#actTypes').querySelectorAll('.chip').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');});
+  const fch=$('#fastedChip');fch.onclick=()=>{fasted=!fasted;fch.classList.toggle('sel',fasted);};
+  $('#saveAct').onclick=()=>{Store.addActivity({type,durationMin:Math.max(1,parseInt($('#actDur').value,10)||45),date:$('#actDate').value||dateKey(new Date()),fasted,note:$('#actNote').value.trim()});closeSheet();toast(t('trainingSaved'));render('activity');};}
+
+/* ============================ SETTINGS ============================ */
+function renderSettings(){
+  const s=Store.settings(),u=Store.user();
+  view.innerHTML=`
+    <div class="card fade"><div class="card-h"><h3>${t('profile')}</h3></div>
+      <label class="fl">${t('nameNick')}</label><input class="fi" id="nameIn" value="${u.name||''}" placeholder="${t('namePh')}">
+      <div class="empty" style="text-align:left;padding:8px 0 0;font-size:.62em;color:var(--muted-2)">ID: ${u.id.slice(0,8)} · ${t('savedForGroups')}</div></div>
+    <div class="card fade"><div class="card-h"><h3>${t('language')}</h3></div>
+      <div class="seg" id="langSeg">
+        <div class="chip ${lang()==='hr'?'sel':''}" data-l="hr"><div class="name">HR</div></div>
+        <div class="chip ${lang()==='en'?'sel':''}" data-l="en"><div class="name">EN</div></div></div></div>
+    <div class="card fade"><div class="card-h"><h3>${t('defaultProtocol')}</h3></div>
+      <div class="proto-grid" id="protoSet">${PROTOCOLS.map(p=>`<div class="chip ${s.protocol===p.id?'sel':''}" data-p="${p.id}"><div class="name">${p.id}</div><div class="sub">${p.id==='custom'?s.customHours+'h':p.sub}</div></div>`).join('')}</div></div>
+    <div class="card fade"><div class="card-h"><h3>${t('hydration')}</h3></div>
+      <label class="fl">${t('dailyGoalMl')}</label><input class="fi" id="goalIn" type="number" step="100" value="${s.waterGoalMl}">
+      <label class="fl">${t('glassSizeMl')}</label><input class="fi" id="glassIn" type="number" step="50" value="${s.glassMl}">
+      <button class="btn btn-ghost mt" id="saveWater">${t('save')}</button></div>
+    <div class="card fade"><div class="card-h"><h3>${t('data')}</h3></div>
+      <button class="btn btn-ghost" id="exportBtn">${t('exportBtn')}</button>
+      <button class="btn btn-ghost mt" id="importBtn">${t('importBtn')}</button>
+      <input type="file" id="importFile" accept="application/json" class="hidden">
+      <button class="btn btn-ghost mt" id="advBtn">⚙️ ${t('advanced')}</button>
+      <button class="btn btn-ghost mt" id="resetBtn" style="color:#ff6b6b;border-color:rgba(255,107,107,.4)">${t('resetAll')}</button>
+      ${Store.memoryOnly?`<div class="empty" style="text-align:left;color:var(--warn);font-size:.62em;padding:10px 0 0">${t('memoryWarn')}</div>`:''}</div>
+    <div class="empty" style="padding:14px 8px;font-size:.62em">${t('footer')}</div>`;
+  $('#nameIn').onchange=e=>{Store.setUserName(e.target.value.trim());toast(t('saved'));};
+  $('#langSeg').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{Store.setSettings({lang:c.dataset.l});applyUI();render('settings');refreshStreak();renderNav();});
+  $('#protoSet').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{if(c.dataset.p==='custom'){openCustomSheet();return;}Store.setSettings({protocol:c.dataset.p});render('settings');});
+  $('#saveWater').onclick=()=>{Store.setSettings({waterGoalMl:Math.max(500,parseInt($('#goalIn').value,10)||2500),glassMl:Math.max(50,parseInt($('#glassIn').value,10)||250)});toast(t('saved'));};
+  $('#exportBtn').onclick=()=>{const b=new Blob([Store.export()],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='fasttrack-backup-'+dateKey(new Date())+'.json';a.click();};
+  $('#importBtn').onclick=()=>$('#importFile').click();
+  $('#importFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{Store.import(r.result);applyUI();toast(t('saved')+' ✓');refreshStreak();renderNav();render('settings');}catch(err){toast('Error: '+err.message);}};r.readAsText(f);};
+  $('#advBtn').onclick=openAdvancedSheet;
+  $('#resetBtn').onclick=openResetSheet;
+}
+
+/* ============================ ADVANCED (UI tweaks) ============================ */
+function openAdvancedSheet(){
+  const ui=Store.settings().ui;
+  const seg=(opts,cur,attr)=>`<div class="seg">${opts.map(o=>`<div class="chip ${cur===o.v?'sel':''}" data-${attr}="${o.v}"><div class="name" style="font-size:.85em">${o.l}</div></div>`).join('')}</div>`;
+  openSheet(`<h2>⚙️ ${t('advanced')}</h2><div class="sd">${t('advSub')}</div>
+    <label class="fl">${t('theme')}</label>${seg([{v:'auto',l:t('themeAuto')},{v:'light',l:t('themeLight')},{v:'dark',l:t('themeDark')}],ui.theme,'th')}
+    <label class="fl">${t('textSize')}</label>
+    <div class="stepper"><button id="fsMinus">−</button><div class="sval" id="fsVal">${Math.round(ui.fontScale*100)}%</div><button id="fsPlus">+</button></div>
+    <label class="fl">${t('contrast')}</label>${seg([{v:'low',l:t('contrastLow')},{v:'normal',l:t('contrastNormal')},{v:'high',l:t('contrastHigh')}],ui.contrast,'ct')}
+    <label class="fl">${t('borderThickness')}</label>${seg([{v:'thin',l:t('borderThin')},{v:'regular',l:t('borderRegular')},{v:'thick',l:t('borderThick')}],ui.border,'bd')}
+    <button class="btn btn-fire mt" id="advDone">${t('done')}</button>`);
+  const live=()=>{applyUI();};
+  $('#scrim').querySelectorAll('[data-th]').forEach(c=>c.onclick=()=>{Store.setUI({theme:c.dataset.th});live();openAdvancedSheet();});
+  $('#scrim').querySelectorAll('[data-ct]').forEach(c=>c.onclick=()=>{Store.setUI({contrast:c.dataset.ct});live();openAdvancedSheet();});
+  $('#scrim').querySelectorAll('[data-bd]').forEach(c=>c.onclick=()=>{Store.setUI({border:c.dataset.bd});live();openAdvancedSheet();});
+  $('#fsMinus').onclick=()=>{Store.setUI({fontScale:Math.max(.9,+(ui.fontScale-.1).toFixed(2))});live();openAdvancedSheet();};
+  $('#fsPlus').onclick=()=>{Store.setUI({fontScale:Math.min(1.6,+(ui.fontScale+.1).toFixed(2))});live();openAdvancedSheet();};
+  $('#advDone').onclick=()=>{closeSheet();render('settings');};
+}
+
+/* ============================ RESET (type-to-confirm) ============================ */
+function openResetSheet(){
+  const word=t('resetWord');
+  openSheet(`<h2>${t('resetTitle')}</h2><div class="sd">${t('resetDesc')} <b style="color:var(--text)">${word}</b></div>
+    <input class="fi" id="resetIn" placeholder="${word}" autocomplete="off" autocapitalize="characters">
+    <button class="btn btn-fire mt" id="resetGo" style="background:linear-gradient(135deg,#ff6b6b,#e23838)" disabled>${t('deleteAll')}</button>
+    <button class="btn btn-ghost mt" id="resetCancel">${t('cancel')}</button>`);
+  const inp=$('#resetIn'),go=$('#resetGo');
+  inp.oninput=()=>{go.disabled=inp.value.trim().toUpperCase()!==word;};
+  $('#resetCancel').onclick=closeSheet;
+  go.onclick=()=>{if(inp.value.trim().toUpperCase()!==word)return;try{localStorage.removeItem('fasttrack:db');}catch(e){}location.reload();};
+}
+
+/* ============================ NAV / SHEET / BOOT ============================ */
+function openSheet(html){const sc=$('#scrim');sc.innerHTML=`<div class="sheet">${html}</div>`;sc.classList.add('show');sc.onclick=e=>{if(e.target===sc)closeSheet();};}
+function closeSheet(){$('#scrim').classList.remove('show');$('#scrim').innerHTML='';}
+const NAV=[{tab:'timer',i:'⏱',k:'navFast'},{tab:'history',i:'📊',k:'navHistory'},{tab:'activity',i:'💪',k:'navTraining'},{tab:'settings',i:'⚙️',k:'navSettings'}];
+function renderNav(){$('#nav').innerHTML=NAV.map(n=>`<button data-tab="${n.tab}" class="${n.tab===currentTab?'on':''}"><span class="ni">${n.i}</span><span class="nl">${t(n.k)}</span></button>`).join('');
+  $('#nav').querySelectorAll('button').forEach(b=>b.onclick=()=>render(b.dataset.tab));}
+let currentTab='timer';
+const R={timer:renderTimer,history:renderHistory,activity:renderActivity,settings:renderSettings};
+function render(tab){currentTab=tab;R[tab]();refreshStreak();$('#nav').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));}
+
+Store.init();
+applyUI();
+renderNav();
+render('timer');
+window.matchMedia('(prefers-color-scheme: light)').addEventListener('change',()=>{if(Store.settings().ui.theme==='auto')applyUI();});
+setInterval(()=>{if(currentTab==='timer')tick();},1000);
+</script>
+</body>
+</html>
