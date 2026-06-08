@@ -53,18 +53,24 @@
   }
   body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.035;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
-  #app{position:relative;z-index:1;max-width:480px;margin:0 auto;padding:0 18px calc(var(--nav-h) + env(safe-area-inset-bottom) + 24px);min-height:100%;filter:contrast(var(--contrast))}
+  #app{position:relative;z-index:1;max-width:480px;margin:0 auto;padding:0 18px calc(env(safe-area-inset-bottom) + 24px);min-height:100%;filter:contrast(var(--contrast))}
 
-  #app>#view{padding-top:calc(env(safe-area-inset-top) + 18px)}
-  .card-streak{position:absolute;top:14px;right:14px;display:flex;align-items:center;gap:5px;background:var(--surface-2);border:var(--bw) solid var(--line);padding:6px 11px;border-radius:999px;z-index:2}
-  .card-streak .n{font-family:var(--mono);font-weight:700;font-size:.85em}
-  .card-streak small{color:var(--muted);font-size:.56em;text-transform:uppercase;letter-spacing:1px}
-  .corner-btn{position:absolute;top:14px;right:14px;width:38px;height:38px;border-radius:11px;background:var(--surface-2);border:var(--bw) solid var(--line);color:var(--muted);display:grid;place-items:center;font-size:1.05em;cursor:pointer;z-index:2}
+  .appbar{display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top) + 18px) 0 12px}
+  .brand{display:flex;align-items:center;gap:9px}
+  .brand .logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--fire),var(--fire-2));display:grid;place-items:center;font-size:1.05em;box-shadow:0 6px 18px rgba(255,61,0,.35)}
+  .brand b{font-weight:700;letter-spacing:.5px;font-size:1.19em}
+  .brand b span{color:var(--fire)}
+  .iconbtn{background:none;border:none;color:var(--muted);font-size:1.4em;line-height:1;cursor:pointer;padding:6px;transition:color .2s}
+  .iconbtn:active{color:var(--fire)}
+  .add-btn{background:none;border:none;color:var(--fire);font-size:1.5em;line-height:1;cursor:pointer;padding:0 4px}
 
   .card{position:relative;background:var(--surface);border:var(--bw) solid var(--line);border-radius:20px;padding:18px}
   .card + .card{margin-top:14px}
   .card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
   .card-h h3{font-size:.75em;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted)}
+  .range-seg{display:flex;gap:5px}
+  .range-seg .rc{background:var(--surface-2);border:var(--bw) solid var(--line);border-radius:9px;padding:4px 9px;font-size:.66em;font-weight:600;letter-spacing:.5px;color:var(--muted);cursor:pointer}
+  .range-seg .rc.sel{border-color:var(--fire);color:var(--fire);background:rgba(255,106,26,.12)}
 
   .timer-card{text-align:center;padding:26px 18px 22px;background:radial-gradient(120% 90% at 50% 0%, rgba(255,106,26,.08), transparent 55%), var(--surface)}
   .ring-wrap{position:relative;width:262px;height:262px;margin:6px auto 4px;max-width:80vw;max-height:80vw}
@@ -109,7 +115,8 @@
   .water-btns{display:flex;gap:8px}
   .water-btns .btn{background:rgba(56,189,248,.12);border:var(--bw) solid rgba(56,189,248,.3);color:var(--water)}
 
-  .row{display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:var(--bw) solid var(--line)}
+  .row{display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:var(--bw) solid var(--line);cursor:pointer;transition:opacity .15s}
+  .row:active{opacity:.6}
   .row:last-child{border-bottom:none}
   .row .ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:1.05em;flex:0 0 auto;background:var(--surface-2)}
   .row .meta{flex:1;min-width:0}
@@ -125,6 +132,8 @@
   .heat{display:flex;gap:5px;margin-bottom:4px}
   .heat .d{flex:1;aspect-ratio:1/2.2;border-radius:5px;background:var(--surface-3)}
   .heat .d.l1{background:rgba(255,106,26,.3)} .heat .d.l2{background:rgba(255,106,26,.58)} .heat .d.l3{background:var(--fire)}
+  .heat .d.future{opacity:.35}
+  .heat.month .d{border-radius:3px}
   .heat-labels{display:flex;justify-content:space-between;font-size:.56em;color:var(--muted-2);letter-spacing:.5px;margin-top:6px}
 
   .empty{text-align:center;color:var(--muted);font-size:.81em;padding:24px 8px}
@@ -162,7 +171,7 @@
   .rate .dot{flex:1;aspect-ratio:1;border-radius:12px;background:var(--surface-2);border:var(--bw) solid var(--line);display:grid;place-items:center;font-size:1.25em;cursor:pointer;transition:.15s}
   .rate .dot.sel{border-color:var(--fire);background:rgba(255,106,26,.14);transform:scale(1.04)}
 
-  .toast{position:fixed;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface-3);border:var(--bw) solid var(--line-2);color:var(--text);padding:11px 18px;border-radius:12px;font-size:.81em;z-index:60;opacity:0;transition:.3s;pointer-events:none}
+  .toast{position:fixed;bottom:calc(env(safe-area-inset-bottom) + 16px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface-3);border:var(--bw) solid var(--line-2);color:var(--text);padding:11px 18px;border-radius:12px;font-size:.81em;z-index:60;opacity:0;transition:.3s;pointer-events:none}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .fade{animation:fade .4s ease}@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   .hidden{display:none!important}
@@ -170,9 +179,12 @@
 </head>
 <body>
 <div id="app">
+  <header class="appbar">
+    <div class="brand"><div class="logo">🔥</div><b>FAST<span>TRACK</span></b></div>
+    <button class="iconbtn" id="settingsBtn" aria-label="Settings">⚙️</button>
+  </header>
   <div id="view"></div>
 </div>
-<nav class="nav" id="nav"></nav>
 <div class="scrim" id="scrim"></div>
 <div class="toast" id="toast"></div>
 
@@ -207,6 +219,9 @@ const Store=(function(){
     activeFast(){return db.fasts.find(f=>f.status==='active')||null;},
     startFast(h){if(this.activeFast())return null;const f={id:uuid(),startAt:nowISO(),endAt:null,targetHours:h,status:'active',energy:null,mood:null,note:'',createdAt:nowISO(),updatedAt:nowISO()};db.fasts.push(f);save();return f;},
     endFast(id,patch){const f=db.fasts.find(x=>x.id===id);if(!f)return;f.endAt=nowISO();f.status='completed';if(patch)Object.assign(f,patch);f.updatedAt=nowISO();save();},
+    addFast(o){const f=Object.assign({id:uuid(),startAt:nowISO(),endAt:nowISO(),targetHours:16,status:'completed',energy:null,mood:null,note:'',createdAt:nowISO(),updatedAt:nowISO()},o);db.fasts.push(f);save();return f;},
+    updateFast(id,patch){const f=db.fasts.find(x=>x.id===id);if(!f)return;Object.assign(f,patch);f.updatedAt=nowISO();save();},
+    deleteFast(id){db.fasts=db.fasts.filter(x=>x.id!==id);save();},
     fasts(){return db.fasts.filter(f=>f.status!=='active').sort((a,b)=>new Date(b.startAt)-new Date(a.startAt));},
     getWater(k){return db.water[k]?db.water[k].ml:0;}, addWater(k,ml){const c=this.getWater(k);db.water[k]={ml:Math.max(0,c+ml),updatedAt:nowISO()};save();},
     addActivity(a){const x=Object.assign({id:uuid(),createdAt:nowISO(),updatedAt:nowISO()},a);db.activities.push(x);save();return x;},
@@ -224,8 +239,9 @@ const DICT={
     fastLabel:'Fast',eatingWindow:'Prozor jela',goalAt:'Cilj u',protocol:'Protokol',endFast:'Završi fast',startFast:'Započni fast',fastStarted:'Fast započet 🔥',youPick:'ti biraš',
     hydration:'Hidracija',hydrationToday:'Hidracija · danas',glass:'čaša',minus:'−',dailyGoal:'Dnevni cilj',
     niceDone:'Bravo! 🔥',fastEnded:'Fast završen',duration:'Trajanje',howFeel:'Kako se osjećaš?',energyLevel:'Razina energije',noteOpt:'Bilješka (opcionalno)',notePh:'npr. lagano, malo gladi navečer...',saveEnd:'Spremi i završi',cancel:'Odustani',fastSaved:'Fast spremljen ✓',
-    customProtocol:'Custom protokol',howManyHours:'Koliko sati želiš fastati?',fastingHours:'Sati fasta',save:'Spremi',min:'min',quickPick:'Brzi izbor',days:'dana',day:'dan',
-    overview:'Pregled',streakStat:'🔥 Streak',totalFasts:'Ukupno fastova',average:'Prosjek',goalsReached:'Cilj dostignut',last14:'Zadnjih 14 dana',today:'danas',fastHistory:'Povijest fasta',goalBadge:'cilj ✓',shortBadge:'kraće',noFasts:'Još nema završenih fastova.<br>Započni prvi na kartici Fast.',
+    customProtocol:'Custom protokol',howManyHours:'Koliko sati želiš fastati?',fastingHours:'Sati fasta',save:'Spremi',min:'min',quickPick:'Brzi izbor',days:'dana',day:'dan',month:'Mjesec',lastNDays:'Zadnjih N dana',
+    editFast:'Uredi fast',addFastTitle:'Dodaj fast',startTime:'Početak',endTime:'Kraj',deleteFastBtn:'Obriši fast',deleteFastConfirm:'Obrisati ovaj fast?',invalidRange:'Kraj mora biti nakon početka',
+    overview:'Pregled',streakStat:'🔥 Streak',totalFasts:'Ukupno fastova',average:'Prosjek',goalsReached:'Cilj dostignut',last14:'Zadnjih 14 dana',today:'danas',fastHistory:'Povijest fasta',goalBadge:'cilj ✓',shortBadge:'kraće',noFasts:'Još nema završenih fastova.<br>Započni prvi gore.',
     training:'Trening',total:'Ukupno',fastedStat:'🔥 Na prazno',addTraining:'+ Dodaj trening',recentActivity:'Zadnje aktivnosti',noTraining:'Još nema treninga.',deleteTraining:'Obrisati ovaj trening?',fastedBadge:'fasted',
     addTrainingTitle:'Dodaj trening',type:'Tip',durationMin:'Trajanje (min)',date:'Datum',trainedFasted:'🔥 Trenirao/la na prazno (fasted)',saveTraining:'Spremi trening',trainingSaved:'Trening spremljen 💪',trainPh:'npr. dobar pump, jaka energija...',
     act_strength:'Trening snage',act_running:'Trčanje',act_cycling:'Bicikl',act_walking:'Hodanje',act_cardio:'Kardio',act_other:'Ostalo',
@@ -241,8 +257,9 @@ const DICT={
     fastLabel:'Fast',eatingWindow:'Eating window',goalAt:'Goal at',protocol:'Protocol',endFast:'End fast',startFast:'Start fast',fastStarted:'Fast started 🔥',youPick:'you pick',
     hydrationToday:'Hydration · today',glass:'glass',minus:'−',dailyGoal:'Daily goal',
     niceDone:'Nice! 🔥',fastEnded:'Fast ended',duration:'Duration',howFeel:'How do you feel?',energyLevel:'Energy level',noteOpt:'Note (optional)',notePh:'e.g. easy, a bit hungry in the evening...',saveEnd:'Save & end',cancel:'Cancel',fastSaved:'Fast saved ✓',
-    customProtocol:'Custom protocol',howManyHours:'How many hours do you want to fast?',fastingHours:'Fasting hours',save:'Save',min:'min',quickPick:'Quick pick',days:'days',day:'day',
-    overview:'Overview',streakStat:'🔥 Streak',totalFasts:'Total fasts',average:'Average',goalsReached:'Goals reached',last14:'Last 14 days',today:'today',fastHistory:'Fast history',goalBadge:'goal ✓',shortBadge:'short',noFasts:'No completed fasts yet.<br>Start your first one on the Fast tab.',
+    customProtocol:'Custom protocol',howManyHours:'How many hours do you want to fast?',fastingHours:'Fasting hours',save:'Save',min:'min',quickPick:'Quick pick',days:'days',day:'day',month:'Month',lastNDays:'Last N days',
+    editFast:'Edit fast',addFastTitle:'Add fast',startTime:'Start',endTime:'End',deleteFastBtn:'Delete fast',deleteFastConfirm:'Delete this fast?',invalidRange:'End must be after start',
+    overview:'Overview',streakStat:'🔥 Streak',totalFasts:'Total fasts',average:'Average',goalsReached:'Goals reached',last14:'Last 14 days',today:'today',fastHistory:'Fast history',goalBadge:'goal ✓',shortBadge:'short',noFasts:'No completed fasts yet.<br>Start your first one above.',
     training:'Training',total:'Total',fastedStat:'🔥 Fasted',addTraining:'+ Add training',recentActivity:'Recent activity',noTraining:'No training yet.',deleteTraining:'Delete this training?',fastedBadge:'fasted',
     addTrainingTitle:'Add training',type:'Type',durationMin:'Duration (min)',date:'Date',trainedFasted:'🔥 Trained fasted',saveTraining:'Save training',trainingSaved:'Training saved 💪',trainPh:'e.g. good pump, strong energy...',
     act_strength:'Strength',act_running:'Running',act_cycling:'Cycling',act_walking:'Walking',act_cardio:'Cardio',act_other:'Other',
@@ -275,7 +292,6 @@ function relDay(d){const k=dateKey(d),tk=dateKey(new Date()),y=dateKey(new Date(
 let toastT;function toast(m){const el=$('#toast');el.textContent=m;el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),1900);}
 function computeStreak(){const g=new Set();Store.fasts().forEach(f=>{if(f.endAt&&hoursBetween(f.startAt,f.endAt)>=f.targetHours)g.add(dateKey(f.startAt));});
   let s=0,cur=new Date();if(!g.has(dateKey(cur)))cur=new Date(Date.now()-864e5);while(g.has(dateKey(cur))){s++;cur=new Date(cur.getTime()-864e5);}return s;}
-function refreshStreak(){const el=$('#streakN');if(!el)return;el.textContent=computeStreak();$('#streakLab').textContent=t('streakDays');}
 
 /* ============================ APPLY UI (theme/font/border/contrast) ====== */
 function applyUI(){
@@ -287,13 +303,32 @@ function applyUI(){
   $('#themeColor').setAttribute('content',resolved==='light'?'#f1f1ee':'#0a0a0c');
 }
 
-/* ============================ TIMER VIEW ============================ */
-function renderTimer(){
+/* ============================ HOME VIEW (fast + history on one screen) ====== */
+let histRange='14';
+function buildHeat(done){
+  const days=[],today=new Date();
+  const lvlFor=f=>{if(!f)return 0;const h=hoursBetween(f.startAt,f.endAt);return h>=f.targetHours?3:h>=f.targetHours*0.75?2:1;};
+  if(histRange==='month'){
+    const y=today.getFullYear(),m=today.getMonth(),dim=new Date(y,m+1,0).getDate();
+    for(let d=1;d<=dim;d++){const dt=new Date(y,m,d),k=dateKey(dt),future=dt>today&&k!==dateKey(today);
+      const f=done.find(x=>dateKey(x.startAt)===k);days.push({lvl:lvlFor(f),future,lab:d});}
+    return {days,month:true,title:today.toLocaleDateString(locale(),{month:'long'}),left:'1',right:t('today')};
+  }
+  const n=parseInt(histRange,10);
+  for(let i=n-1;i>=0;i--){const dt=new Date(Date.now()-i*864e5),k=dateKey(dt),f=done.find(x=>dateKey(x.startAt)===k);
+    days.push({lvl:lvlFor(f),future:false,wd:dt.toLocaleDateString(locale(),{weekday:'narrow'})});}
+  return {days,month:false,title:t('lastNDays').replace('N',n),left:days[0].wd,right:t('today')};
+}
+function renderHome(){
   const s=Store.settings(),active=Store.activeFast(),tH=active?active.targetHours:targetHours();
   const C=2*Math.PI*118,isCustom=s.protocol==='custom';
+  const fasts=Store.fasts(),done=fasts.filter(f=>f.endAt),
+    totalH=done.reduce((a,f)=>a+hoursBetween(f.startAt,f.endAt),0),
+    reached=done.filter(f=>hoursBetween(f.startAt,f.endAt)>=f.targetHours).length,
+    avg=done.length?totalH/done.length:0;
+  const heat=buildHeat(done);
   view.innerHTML=`
     <div class="card timer-card fade">
-      <div class="card-streak"><span>🔥</span><span class="n" id="streakN">0</span><small id="streakLab">${t('streakDays')}</small></div>
       <div class="ring-wrap"><svg viewBox="0 0 262 262">
         <defs><linearGradient id="grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ff8a3d"/><stop offset="100%" stop-color="#ff3d00"/></linearGradient></defs>
         <circle class="ring-bg" cx="131" cy="131" r="118"/>
@@ -311,11 +346,33 @@ function renderTimer(){
       </div>
       ${active?'':`<div class="proto-grid mt" id="protoGrid">${PROTOCOLS.map(p=>`<div class="chip ${s.protocol===p.id?'sel':''}" data-p="${p.id}"><div class="name">${p.id}</div></div>`).join('')}<div class="chip chip-cog ${isCustom?'sel':''}" id="customChip" title="${t('customProtocol')}"><div class="name">⚙️</div></div></div>`}
       ${active?`<button class="btn btn-stop mt" id="endBtn">${t('endFast')}</button>`:`<button class="btn btn-fire mt" id="startBtn">${t('startFast')}</button>`}
-    </div>`;
+    </div>
+    <div class="card fade"><div class="card-h"><h3>${t('overview')}</h3></div><div class="stat-grid">
+      <div class="stat-box"><div class="v">${computeStreak()}</div><div class="l">${t('streakStat')}</div></div>
+      <div class="stat-box"><div class="v">${done.length}</div><div class="l">${t('totalFasts')}</div></div>
+      <div class="stat-box"><div class="v">${avg?fmtH(avg):'—'}</div><div class="l">${t('average')}</div></div>
+      <div class="stat-box"><div class="v">${reached}</div><div class="l">${t('goalsReached')}</div></div></div></div>
+    <div class="card fade"><div class="card-h"><h3>${heat.title}</h3>
+      <div class="range-seg" id="rangeSeg">
+        <div class="rc ${histRange==='7'?'sel':''}" data-r="7">7</div>
+        <div class="rc ${histRange==='14'?'sel':''}" data-r="14">14</div>
+        <div class="rc ${histRange==='month'?'sel':''}" data-r="month">${t('month')}</div></div></div>
+      <div class="heat ${heat.month?'month':''}">${heat.days.map(d=>`<div class="d ${d.future?'future':(d.lvl?'l'+d.lvl:'')}"></div>`).join('')}</div>
+      <div class="heat-labels"><span>${heat.left}</span><span>${heat.right}</span></div></div>
+    <div class="card fade"><div class="card-h"><h3>${t('fastHistory')}</h3><button class="add-btn" id="addFastBtn" title="${t('addFastTitle')}">+</button></div>
+      ${done.length?done.map(f=>{const h=hoursBetween(f.startAt,f.endAt),ok=h>=f.targetHours;
+        return `<div class="row" data-id="${f.id}"><div class="ic">${ok?'🔥':'⏳'}</div>
+          <div class="meta"><div class="t">${relDay(f.startAt)} · ${f.targetHours}h ${t('goal')}</div>
+            <div class="s">${MOODS[f.mood]??''} ${f.note?('· '+f.note):''}</div></div>
+          <div class="right"><div class="v">${fmtH(h)}</div><span class="badge ${ok?'ok':'short'}">${ok?t('goalBadge'):t('shortBadge')}</span></div></div>`;}).join('')
+        :`<div class="empty"><span class="em">📭</span>${t('noFasts')}</div>`}</div>`;
   if(active){$('#endBtn').onclick=()=>openEndSheet(active);}
-  else{$('#startBtn').onclick=()=>{Store.startFast(targetHours());toast(t('fastStarted'));render('timer');};
-    $('#protoGrid').querySelectorAll('.chip[data-p]').forEach(c=>c.onclick=()=>{Store.setSettings({protocol:c.dataset.p});render('timer');});
+  else{$('#startBtn').onclick=()=>{Store.startFast(targetHours());toast(t('fastStarted'));render('home');};
+    $('#protoGrid').querySelectorAll('.chip[data-p]').forEach(c=>c.onclick=()=>{Store.setSettings({protocol:c.dataset.p});render('home');});
     $('#customChip').onclick=openCustomSheet;}
+  $('#rangeSeg').querySelectorAll('.rc').forEach(c=>c.onclick=()=>{histRange=c.dataset.r;render('home');});
+  $('#addFastBtn').onclick=openManualFastSheet;
+  view.querySelectorAll('.row[data-id]').forEach(r=>r.onclick=()=>{const f=done.find(x=>x.id===r.dataset.id);if(f)openFastSheet(f);});
   tick();
 }
 function tick(){const active=Store.activeFast(),ring=$('#ringFg');if(!ring)return;const C=2*Math.PI*118;
@@ -326,38 +383,6 @@ function tick(){const active=Store.activeFast(),ring=$('#ringFg');if(!ring)retur
     else{st.textContent=t('fasting');st.className='ring-state active';sub.innerHTML=t('remaining')+' <b>'+fmtDur(tm-el)+'</b>';}
     const end=new Date(new Date(active.startAt).getTime()+tm);if(ev)ev.textContent=pad(end.getHours())+':'+pad(end.getMinutes());}
   else ring.style.strokeDashoffset=C;}
-
-/* ============================ HYDRATION VIEW ============================ */
-function renderHydration(){
-  const s=Store.settings(),wk=dateKey(new Date()),water=Store.getWater(wk),goal=s.waterGoalMl;
-  const C=2*Math.PI*118,pct=Math.min(1,water/goal),pctTxt=Math.round(water/goal*100);
-  view.innerHTML=`
-    <div class="card timer-card fade">
-      <button class="corner-btn" id="goalCog" title="${t('dailyGoal')}">⚙️</button>
-      <div class="ring-wrap"><svg viewBox="0 0 262 262">
-        <defs><linearGradient id="gradW" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0ea5e9"/><stop offset="100%" stop-color="#38bdf8"/></linearGradient></defs>
-        <circle class="ring-bg" cx="131" cy="131" r="118"/>
-        <circle class="ring-fg w" cx="131" cy="131" r="118" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct)}"/>
-      </svg>
-        <div class="ring-center">
-          <div class="ring-state water">${pctTxt}%</div>
-          <div class="ring-time">${(water/1000).toFixed(2)}<span style="font-size:.45em"> L</span></div>
-          <div class="ring-sub">${t('goal')} ${(goal/1000).toFixed(1)} L</div>
-        </div></div>
-      <div class="water-btns mt">
-        <button class="btn btn-sm" data-w="${s.glassMl}">+ ${t('glass')} (${s.glassMl}ml)</button>
-        <button class="btn btn-sm" data-w="500">+ 500ml</button>
-        <button class="btn btn-sm" data-w="-${s.glassMl}">${t('minus')}</button></div>
-    </div>`;
-  $('#goalCog').onclick=openWaterGoalSheet;
-  view.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{Store.addWater(wk,parseInt(b.dataset.w,10));render('hydration');});
-}
-function openWaterGoalSheet(){const s=Store.settings();
-  openSheet(`<h2>${t('hydration')}</h2>
-    <label class="fl">${t('dailyGoalMl')}</label><input class="fi" id="goalIn" type="number" step="100" value="${s.waterGoalMl}">
-    <label class="fl">${t('glassSizeMl')}</label><input class="fi" id="glassIn" type="number" step="50" value="${s.glassMl}">
-    <button class="btn btn-fire mt" id="saveGoal">${t('save')}</button>`);
-  $('#saveGoal').onclick=()=>{Store.setSettings({waterGoalMl:Math.max(500,parseInt($('#goalIn').value,10)||2500),glassMl:Math.max(50,parseInt($('#glassIn').value,10)||250)});closeSheet();toast(t('saved'));render('hydration');};}
 
 /* ============================ SHEETS ============================ */
 function openEndSheet(fast){const el=Date.now()-new Date(fast.startAt),reached=el>=fast.targetHours*3600000;let mood=null,energy=null;
@@ -370,7 +395,7 @@ function openEndSheet(fast){const el=Date.now()-new Date(fast.startAt),reached=e
   $('#moodRate').querySelectorAll('.dot').forEach(d=>d.onclick=()=>{mood=+d.dataset.i;$('#moodRate').querySelectorAll('.dot').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');});
   $('#enRate').querySelectorAll('.dot').forEach(d=>d.onclick=()=>{energy=+d.dataset.i;$('#enRate').querySelectorAll('.dot').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');});
   $('#cancelEnd').onclick=closeSheet;
-  $('#saveEnd').onclick=()=>{Store.endFast(fast.id,{mood,energy,note:$('#noteIn').value.trim()});closeSheet();toast(t('fastSaved'));refreshStreak();render('timer');};}
+  $('#saveEnd').onclick=()=>{Store.endFast(fast.id,{mood,energy,note:$('#noteIn').value.trim()});closeSheet();toast(t('fastSaved'));render('home');};}
 function openCustomSheet(){const s=Store.settings();
   const presets=[1,2,3,5,7];
   openSheet(`<h2>${t('customProtocol')}</h2><div class="sd">${t('howManyHours')}</div>
@@ -382,88 +407,63 @@ function openCustomSheet(){const s=Store.settings();
   $('#dayPresets').querySelectorAll('.chip').forEach(c=>c.onclick=()=>save(c.dataset.h));
   $('#saveCustom').onclick=()=>save($('#customH').value);}
 
-/* ============================ HISTORY ============================ */
-function renderHistory(){
-  const fasts=Store.fasts(),done=fasts.filter(f=>f.endAt),totalH=done.reduce((a,f)=>a+hoursBetween(f.startAt,f.endAt),0),
-    reached=done.filter(f=>hoursBetween(f.startAt,f.endAt)>=f.targetHours).length,avg=done.length?totalH/done.length:0;
-  const days=[];for(let i=13;i>=0;i--){const d=new Date(Date.now()-i*864e5),k=dateKey(d),f=done.find(x=>dateKey(x.startAt)===k);let lvl=0;
-    if(f){const h=hoursBetween(f.startAt,f.endAt);lvl=h>=f.targetHours?3:h>=f.targetHours*0.75?2:1;}days.push({lvl,wd:d.toLocaleDateString(locale(),{weekday:'narrow'})});}
-  view.innerHTML=`
-    <div class="card fade"><div class="card-h"><h3>${t('overview')}</h3></div><div class="stat-grid">
-      <div class="stat-box"><div class="v">${computeStreak()}</div><div class="l">${t('streakStat')}</div></div>
-      <div class="stat-box"><div class="v">${done.length}</div><div class="l">${t('totalFasts')}</div></div>
-      <div class="stat-box"><div class="v">${avg?fmtH(avg):'—'}</div><div class="l">${t('average')}</div></div>
-      <div class="stat-box"><div class="v">${reached}</div><div class="l">${t('goalsReached')}</div></div></div></div>
-    <div class="card fade"><div class="card-h"><h3>${t('last14')}</h3></div>
-      <div class="heat">${days.map(d=>`<div class="d ${d.lvl?'l'+d.lvl:''}"></div>`).join('')}</div>
-      <div class="heat-labels"><span>${days[0].wd}</span><span>${t('today')}</span></div></div>
-    <div class="card fade"><div class="card-h"><h3>${t('fastHistory')}</h3></div>
-      ${done.length?done.map(f=>{const h=hoursBetween(f.startAt,f.endAt),ok=h>=f.targetHours;
-        return `<div class="row"><div class="ic">${ok?'🔥':'⏳'}</div>
-          <div class="meta"><div class="t">${relDay(f.startAt)} · ${f.targetHours}h ${t('goal')}</div>
-            <div class="s">${MOODS[f.mood]??''} ${f.note?('· '+f.note):''}</div></div>
-          <div class="right"><div class="v">${fmtH(h)}</div><span class="badge ${ok?'ok':'short'}">${ok?t('goalBadge'):t('shortBadge')}</span></div></div>`;}).join('')
-        :`<div class="empty"><span class="em">📭</span>${t('noFasts')}</div>`}</div>`;
-}
-
-/* ============================ ACTIVITY ============================ */
-function renderActivity(){
-  const acts=Store.activities(),fc=acts.filter(a=>a.fasted).length;
-  view.innerHTML=`
-    <div class="card fade"><div class="card-h"><h3>${t('training')}</h3></div><div class="stat-grid">
-      <div class="stat-box"><div class="v">${acts.length}</div><div class="l">${t('total')}</div></div>
-      <div class="stat-box"><div class="v">${fc}</div><div class="l">${t('fastedStat')}</div></div></div>
-      <button class="btn btn-fire mt" id="addAct">${t('addTraining')}</button></div>
-    <div class="card fade"><div class="card-h"><h3>${t('recentActivity')}</h3></div>
-      ${acts.length?acts.map(a=>{const e=(ACT_TYPES.find(x=>x.k===a.type)||{e:'⚡'}).e;
-        return `<div class="row" data-id="${a.id}"><div class="ic">${e}</div>
-          <div class="meta"><div class="t">${t('act_'+a.type)}</div><div class="s">${relDay(a.date)} · ${a.durationMin} ${t('min')}${a.note?(' · '+a.note):''}</div></div>
-          <div class="right">${a.fasted?`<span class="badge fasted">${t('fastedBadge')}</span>`:''}</div></div>`;}).join('')
-        :`<div class="empty"><span class="em">💪</span>${t('noTraining')}</div>`}</div>`;
-  $('#addAct').onclick=openActivitySheet;
-  view.querySelectorAll('.row[data-id]').forEach(r=>r.onclick=()=>{if(confirm(t('deleteTraining'))){Store.deleteActivity(r.dataset.id);render('activity');}});
-}
-function openActivitySheet(){let type='strength',fasted=!!Store.activeFast();
-  openSheet(`<h2>${t('addTrainingTitle')}</h2>
-    <label class="fl">${t('type')}</label><div class="seg" id="actTypes">${ACT_TYPES.map(x=>`<div class="chip ${x.k===type?'sel':''}" data-t="${x.k}"><div class="name" style="font-size:.85em">${x.e} ${t('act_'+x.k)}</div></div>`).join('')}</div>
-    <label class="fl">${t('durationMin')}</label><input class="fi" id="actDur" type="number" min="1" value="45">
-    <label class="fl">${t('date')}</label><input class="fi" id="actDate" type="date" value="${dateKey(new Date())}">
-    <div class="seg mt"><div class="chip ${fasted?'sel':''}" id="fastedChip" style="flex:1"><div class="name" style="font-size:.9em">${t('trainedFasted')}</div></div></div>
-    <label class="fl">${t('noteOpt')}</label><textarea class="fi" id="actNote" placeholder="${t('trainPh')}"></textarea>
-    <button class="btn btn-fire mt" id="saveAct">${t('saveTraining')}</button>`);
-  $('#actTypes').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{type=c.dataset.t;$('#actTypes').querySelectorAll('.chip').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');});
-  const fch=$('#fastedChip');fch.onclick=()=>{fasted=!fasted;fch.classList.toggle('sel',fasted);};
-  $('#saveAct').onclick=()=>{Store.addActivity({type,durationMin:Math.max(1,parseInt($('#actDur').value,10)||45),date:$('#actDate').value||dateKey(new Date()),fasted,note:$('#actNote').value.trim()});closeSheet();toast(t('trainingSaved'));render('activity');};}
+/* ============================ FAST EDIT / MANUAL ADD ============================ */
+const toLocalInput=iso=>{const d=new Date(iso);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes());};
+const fromLocalInput=v=>v?new Date(v).toISOString():null;
+function openFastSheet(fast){const h=hoursBetween(fast.startAt,fast.endAt),ok=h>=fast.targetHours;
+  openSheet(`<h2>${t('editFast')}</h2>
+    <div class="sd">${relDay(fast.startAt)} · ${fmtH(h)} · ${t('goal')} ${fast.targetHours}h ${ok?'✓':''}</div>
+    <label class="fl">${t('startTime')}</label><input class="fi" id="efStart" type="datetime-local" value="${toLocalInput(fast.startAt)}">
+    <label class="fl">${t('endTime')}</label><input class="fi" id="efEnd" type="datetime-local" value="${toLocalInput(fast.endAt)}">
+    <label class="fl">${t('fastingHours')}</label><input class="fi" id="efTarget" type="number" min="1" max="240" value="${fast.targetHours}">
+    <label class="fl">${t('noteOpt')}</label><textarea class="fi" id="efNote" placeholder="${t('notePh')}">${fast.note||''}</textarea>
+    <button class="btn btn-fire mt" id="efSave">${t('save')}</button>
+    <button class="btn btn-ghost mt" id="efDelete" style="color:#ff6b6b;border-color:rgba(255,107,107,.4)">${t('deleteFastBtn')}</button>`);
+  $('#efSave').onclick=()=>{const sa=fromLocalInput($('#efStart').value),ea=fromLocalInput($('#efEnd').value);
+    if(!sa||!ea||new Date(ea)<=new Date(sa)){toast(t('invalidRange'));return;}
+    Store.updateFast(fast.id,{startAt:sa,endAt:ea,targetHours:Math.min(240,Math.max(1,parseInt($('#efTarget').value,10)||fast.targetHours)),note:$('#efNote').value.trim()});
+    closeSheet();toast(t('saved'));render('home');};
+  $('#efDelete').onclick=()=>{if(confirm(t('deleteFastConfirm'))){Store.deleteFast(fast.id);closeSheet();render('home');}};}
+function openManualFastSheet(){const tH=targetHours(),now=new Date(),start=new Date(now.getTime()-tH*3600000);
+  openSheet(`<h2>${t('addFastTitle')}</h2>
+    <label class="fl">${t('startTime')}</label><input class="fi" id="mfStart" type="datetime-local" value="${toLocalInput(start.toISOString())}">
+    <label class="fl">${t('endTime')}</label><input class="fi" id="mfEnd" type="datetime-local" value="${toLocalInput(now.toISOString())}">
+    <label class="fl">${t('fastingHours')}</label><input class="fi" id="mfTarget" type="number" min="1" max="240" value="${tH}">
+    <label class="fl">${t('noteOpt')}</label><textarea class="fi" id="mfNote" placeholder="${t('notePh')}"></textarea>
+    <button class="btn btn-fire mt" id="mfSave">${t('save')}</button>`);
+  $('#mfSave').onclick=()=>{const sa=fromLocalInput($('#mfStart').value),ea=fromLocalInput($('#mfEnd').value);
+    if(!sa||!ea||new Date(ea)<=new Date(sa)){toast(t('invalidRange'));return;}
+    Store.addFast({startAt:sa,endAt:ea,targetHours:Math.min(240,Math.max(1,parseInt($('#mfTarget').value,10)||tH)),note:$('#mfNote').value.trim()});
+    closeSheet();toast(t('fastSaved'));render('home');};}
 
 /* ============================ SETTINGS ============================ */
-function renderSettings(){
+function openSettingsSheet(){
   const s=Store.settings(),u=Store.user();
-  view.innerHTML=`
-    <div class="card fade"><div class="card-h"><h3>${t('profile')}</h3></div>
-      <label class="fl">${t('nameNick')}</label><input class="fi" id="nameIn" value="${u.name||''}" placeholder="${t('namePh')}">
-      <div class="empty" style="text-align:left;padding:8px 0 0;font-size:.62em;color:var(--muted-2)">ID: ${u.id.slice(0,8)} · ${t('savedForGroups')}</div></div>
-    <div class="card fade"><div class="card-h"><h3>${t('language')}</h3></div>
-      <div class="seg" id="langSeg">
-        <div class="chip ${lang()==='hr'?'sel':''}" data-l="hr"><div class="name">HR</div></div>
-        <div class="chip ${lang()==='en'?'sel':''}" data-l="en"><div class="name">EN</div></div></div></div>
-    <div class="card fade"><div class="card-h"><h3>${t('theme')}</h3></div>
-      <div class="seg" id="themeSeg">
-        <div class="chip ${s.ui.theme==='auto'?'sel':''}" data-th="auto"><div class="name">${t('themeAuto')}</div></div>
-        <div class="chip ${s.ui.theme==='light'?'sel':''}" data-th="light"><div class="name">${t('themeLight')}</div></div>
-        <div class="chip ${s.ui.theme==='dark'?'sel':''}" data-th="dark"><div class="name">${t('themeDark')}</div></div></div></div>
-    <div class="card fade"><div class="card-h"><h3>${t('data')}</h3></div>
-      <button class="btn btn-ghost" id="exportBtn">${t('exportBtn')}</button>
-      <button class="btn btn-ghost mt" id="importBtn">${t('importBtn')}</button>
-      <input type="file" id="importFile" accept="application/json" class="hidden">
-      <button class="btn btn-ghost mt" id="resetBtn" style="color:#ff6b6b;border-color:rgba(255,107,107,.4)">${t('resetAll')}</button>
-      ${Store.memoryOnly?`<div class="empty" style="text-align:left;color:var(--warn);font-size:.62em;padding:10px 0 0">${t('memoryWarn')}</div>`:''}</div>
-    <div class="empty" style="padding:14px 8px;font-size:.62em">${t('footer')}</div>`;
+  openSheet(`<h2>${t('navSettings')}</h2>
+    <label class="fl">${t('nameNick')}</label><input class="fi" id="nameIn" value="${u.name||''}" placeholder="${t('namePh')}">
+    <div class="empty" style="text-align:left;padding:8px 0 0;font-size:.62em;color:var(--muted-2)">ID: ${u.id.slice(0,8)} · ${t('savedForGroups')}</div>
+    <label class="fl mt">${t('language')}</label>
+    <div class="seg" id="langSeg">
+      <div class="chip ${lang()==='hr'?'sel':''}" data-l="hr"><div class="name">HR</div></div>
+      <div class="chip ${lang()==='en'?'sel':''}" data-l="en"><div class="name">EN</div></div></div>
+    <label class="fl mt">${t('theme')}</label>
+    <div class="seg" id="themeSeg">
+      <div class="chip ${s.ui.theme==='auto'?'sel':''}" data-th="auto"><div class="name">${t('themeAuto')}</div></div>
+      <div class="chip ${s.ui.theme==='light'?'sel':''}" data-th="light"><div class="name">${t('themeLight')}</div></div>
+      <div class="chip ${s.ui.theme==='dark'?'sel':''}" data-th="dark"><div class="name">${t('themeDark')}</div></div></div>
+    <label class="fl mt">${t('data')}</label>
+    <button class="btn btn-ghost" id="exportBtn">${t('exportBtn')}</button>
+    <button class="btn btn-ghost mt" id="importBtn">${t('importBtn')}</button>
+    <input type="file" id="importFile" accept="application/json" class="hidden">
+    <button class="btn btn-ghost mt" id="resetBtn" style="color:#ff6b6b;border-color:rgba(255,107,107,.4)">${t('resetAll')}</button>
+    ${Store.memoryOnly?`<div class="empty" style="text-align:left;color:var(--warn);font-size:.62em;padding:10px 0 0">${t('memoryWarn')}</div>`:''}
+    <div class="empty" style="padding:14px 8px 0;font-size:.62em">${t('footer')}</div>`);
   $('#nameIn').onchange=e=>{Store.setUserName(e.target.value.trim());toast(t('saved'));};
-  $('#langSeg').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{Store.setSettings({lang:c.dataset.l});applyUI();render('settings');refreshStreak();renderNav();});
-  $('#themeSeg').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{Store.setUI({theme:c.dataset.th});applyUI();render('settings');});
+  $('#langSeg').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{Store.setSettings({lang:c.dataset.l});applyUI();render('home');openSettingsSheet();});
+  $('#themeSeg').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{Store.setUI({theme:c.dataset.th});applyUI();render('home');openSettingsSheet();});
   $('#exportBtn').onclick=()=>{const b=new Blob([Store.export()],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='fasttrack-backup-'+dateKey(new Date())+'.json';a.click();};
   $('#importBtn').onclick=()=>$('#importFile').click();
-  $('#importFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{Store.import(r.result);applyUI();toast(t('saved')+' ✓');refreshStreak();renderNav();render('settings');}catch(err){toast('Error: '+err.message);}};r.readAsText(f);};
+  $('#importFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{Store.import(r.result);applyUI();toast(t('saved')+' ✓');render('home');openSettingsSheet();}catch(err){toast('Error: '+err.message);}};r.readAsText(f);};
   $('#resetBtn').onclick=openResetSheet;
 }
 
@@ -483,19 +483,16 @@ function openResetSheet(){
 /* ============================ NAV / SHEET / BOOT ============================ */
 function openSheet(html){const sc=$('#scrim');sc.innerHTML=`<div class="sheet">${html}</div>`;sc.classList.add('show');sc.onclick=e=>{if(e.target===sc)closeSheet();};}
 function closeSheet(){$('#scrim').classList.remove('show');$('#scrim').innerHTML='';}
-const NAV=[{tab:'timer',i:'⏱',k:'navFast'},{tab:'hydration',i:'💧',k:'navHydration'},{tab:'history',i:'📊',k:'navHistory'},{tab:'activity',i:'💪',k:'navTraining'},{tab:'settings',i:'⚙️',k:'navSettings'}];
-function renderNav(){$('#nav').innerHTML=NAV.map(n=>`<button data-tab="${n.tab}" class="${n.tab===currentTab?'on':''}"><span class="ni">${n.i}</span><span class="nl">${t(n.k)}</span></button>`).join('');
-  $('#nav').querySelectorAll('button').forEach(b=>b.onclick=()=>render(b.dataset.tab));}
-let currentTab='timer';
-const R={timer:renderTimer,hydration:renderHydration,history:renderHistory,activity:renderActivity,settings:renderSettings};
-function render(tab){currentTab=tab;R[tab]();refreshStreak();$('#nav').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));}
+let currentTab='home';
+const R={home:renderHome};
+function render(tab){currentTab=tab;R[tab]();}
 
 Store.init();
 applyUI();
-renderNav();
-render('timer');
+$('#settingsBtn').onclick=openSettingsSheet;
+render('home');
 window.matchMedia('(prefers-color-scheme: light)').addEventListener('change',()=>{if(Store.settings().ui.theme==='auto')applyUI();});
-setInterval(()=>{if(currentTab==='timer')tick();},1000);
+setInterval(()=>{if(currentTab==='home')tick();},1000);
 </script>
 </body>
 </html>
