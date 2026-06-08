@@ -314,6 +314,7 @@ function applyUI(){
 
 /* ============================ HOME VIEW (fast + history on one screen) ====== */
 let histRange='14';
+let homeEntered=false;
 const lvlFor=f=>{if(!f)return 0;const h=hoursBetween(f.startAt,f.endAt);return h>=f.targetHours?3:h>=f.targetHours*0.75?2:1;};
 function buildHeat(done){
   const today=new Date(),tk=dateKey(today);
@@ -340,8 +341,9 @@ function renderHome(){
     reached=done.filter(f=>hoursBetween(f.startAt,f.endAt)>=f.targetHours).length,
     avg=done.length?totalH/done.length:0;
   const heat=buildHeat(done);
+  const fc=homeEntered?'':' fade';
   view.innerHTML=`
-    <div class="card timer-card fade">
+    <div class="card timer-card${fc}">
       <div class="ring-wrap"><svg viewBox="0 0 262 262">
         <defs><linearGradient id="grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ff8a3d"/><stop offset="100%" stop-color="#ff3d00"/></linearGradient></defs>
         <circle class="ring-bg" cx="131" cy="131" r="118"/>
@@ -361,12 +363,12 @@ function renderHome(){
       ${active?'':`<div class="proto-grid mt" id="protoGrid">${PROTOCOLS.map(p=>`<div class="chip ${s.protocol===p.id?'sel':''}" data-p="${p.id}"><div class="name">${p.id}</div></div>`).join('')}<div class="chip chip-cog ${isCustom?'sel':''}" id="customChip" title="${t('customProtocol')}"><div class="name">⚙️</div></div></div>`}
       ${active?`<button class="btn btn-stop mt" id="endBtn">${t('endFast')}</button>`:`<button class="btn btn-fire mt" id="startBtn">${t('startFast')}</button>`}
     </div>
-    <div class="card fade"><div class="card-h"><h3>${t('overview')}</h3></div><div class="stat-grid">
+    <div class="card${fc}"><div class="card-h"><h3>${t('overview')}</h3></div><div class="stat-grid">
       <div class="stat-box"><div class="v">${computeStreak()}</div><div class="l">${t('streakStat')}</div></div>
       <div class="stat-box"><div class="v">${done.length}</div><div class="l">${t('totalFasts')}</div></div>
       <div class="stat-box"><div class="v">${avg?fmtH(avg):'—'}</div><div class="l">${t('average')}</div></div>
       <div class="stat-box"><div class="v">${reached}</div><div class="l">${t('goalsReached')}</div></div></div></div>
-    <div class="card fade"><div class="card-h"><h3>${heat.title}</h3>
+    <div class="card${fc}"><div class="card-h"><h3>${heat.title}</h3>
       <div class="range-seg" id="rangeSeg">
         <div class="rc ${histRange==='14'?'sel':''}" data-r="14">14</div>
         <div class="rc ${histRange==='month'?'sel':''}" data-r="month">${t('month')}</div></div></div>
@@ -374,7 +376,7 @@ function renderHome(){
         ? `<div class="cal">${heat.wds.map(w=>`<div class="wd">${w}</div>`).join('')}${heat.cells.map(c=>c.empty?`<div class="c empty"></div>`:`<div class="c ${c.future?'future':(c.lvl?'l'+c.lvl:'')} ${c.today?'today':''}">${c.day}</div>`).join('')}</div>`
         : `<div class="heat">${heat.days.map(d=>`<div class="d ${d.lvl?'l'+d.lvl:''}"></div>`).join('')}</div>
       <div class="heat-labels"><span>${heat.left}</span><span>${heat.right}</span></div>`}</div>
-    <div class="card fade"><div class="card-h"><h3>${t('fastHistory')}</h3><button class="add-btn" id="addFastBtn" title="${t('addFastTitle')}">+</button></div>
+    <div class="card${fc}"><div class="card-h"><h3>${t('fastHistory')}</h3><button class="add-btn" id="addFastBtn" title="${t('addFastTitle')}">+</button></div>
       ${done.length?done.map(f=>{const h=hoursBetween(f.startAt,f.endAt),ok=h>=f.targetHours;
         return `<div class="row" data-id="${f.id}"><div class="ic">${ok?'🔥':'⏳'}</div>
           <div class="meta"><div class="t">${relDay(f.startAt)} · ${f.targetHours}h ${t('goal')}</div>
@@ -389,6 +391,7 @@ function renderHome(){
   $('#rangeSeg').querySelectorAll('.rc').forEach(c=>c.onclick=()=>{histRange=c.dataset.r;render('home');});
   $('#addFastBtn').onclick=openManualFastSheet;
   view.querySelectorAll('.row[data-id]').forEach(r=>r.onclick=()=>{const f=done.find(x=>x.id===r.dataset.id);if(f)openFastSheet(f);});
+  homeEntered=true;
   tick();
 }
 let ringBig='elapsed';
@@ -506,7 +509,10 @@ function openResetSheet(){
 }
 
 /* ============================ NAV / SHEET / BOOT ============================ */
-function openSheet(html){const sc=$('#scrim');sc.innerHTML=`<div class="sheet">${html}</div>`;sc.classList.add('show');sc.onclick=e=>{if(e.target===sc)closeSheet();};}
+function openSheet(html){const sc=$('#scrim');const sh=sc.querySelector('.sheet');
+  if(sc.classList.contains('show')&&sh){sh.innerHTML=html;}
+  else{sc.innerHTML=`<div class="sheet">${html}</div>`;sc.classList.add('show');}
+  sc.onclick=e=>{if(e.target===sc)closeSheet();};}
 function closeSheet(){$('#scrim').classList.remove('show');$('#scrim').innerHTML='';}
 let currentTab='home';
 const R={home:renderHome};
