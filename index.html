@@ -23,9 +23,6 @@
     --st0:#fbbf24; --st1:#fb923c; --st2:#ff6a1a; --st3:#e23a00; --st4:#34d399;
     --sh-raise:0 1px 1px rgba(0,0,0,.45),0 6px 16px -8px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.05);
     --sh-inset:inset 0 2px 4px rgba(0,0,0,.5),inset 0 -1px 0 rgba(255,255,255,.04);
-    /* sun-driven light: JS pomiče ove (default = svjetlo odozgo) */
-    --shx:0; --shy:6; --shblur:16; --hix:0; --hiy:1;
-    --sh-card:0 1px 1px rgba(0,0,0,.45),calc(var(--shx)*1px) calc(var(--shy)*1px) calc(var(--shblur)*1px) -8px rgba(0,0,0,.7),inset calc(var(--hix)*1px) calc(var(--hiy)*1px) 0 rgba(255,255,255,.05);
     --divider:rgba(255,255,255,.07);
     --display:'Oswald',sans-serif; --mono:'Space Mono',ui-monospace,monospace;
     --nav-h:64px;
@@ -42,7 +39,6 @@
       --st2:#ef5a0c; --st3:#dc3a00; --st4:#059669;
       --sh-raise:0 1px 2px rgba(0,0,0,.08),0 10px 20px -10px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.8);
       --sh-inset:inset 0 2px 4px rgba(0,0,0,.12),inset 0 -1px 0 rgba(255,255,255,.7);
-      --sh-card:0 1px 2px rgba(0,0,0,.08),calc(var(--shx)*1px) calc(var(--shy)*1px) calc(var(--shblur)*1px) -10px rgba(0,0,0,.22),inset calc(var(--hix)*1px) calc(var(--hiy)*1px) 0 rgba(255,255,255,.8);
       --divider:rgba(0,0,0,.08);
     }
   }
@@ -54,7 +50,6 @@
     --st2:#ef5a0c; --st3:#dc3a00; --st4:#059669;
     --sh-raise:0 1px 2px rgba(0,0,0,.08),0 10px 20px -10px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.8);
     --sh-inset:inset 0 2px 4px rgba(0,0,0,.12),inset 0 -1px 0 rgba(255,255,255,.7);
-    --sh-card:0 1px 2px rgba(0,0,0,.08),calc(var(--shx)*1px) calc(var(--shy)*1px) calc(var(--shblur)*1px) -10px rgba(0,0,0,.22),inset calc(var(--hix)*1px) calc(var(--hiy)*1px) 0 rgba(255,255,255,.8);
     --divider:rgba(0,0,0,.08);
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -80,7 +75,7 @@
   .iconbtn:active{color:var(--fire)}
   .add-btn{background:none;border:none;color:var(--fire);font-size:1.5em;line-height:1;cursor:pointer;padding:0 4px}
 
-  .card{position:relative;background:var(--surface);box-shadow:var(--sh-card);border-radius:20px;padding:18px;transition:box-shadow .8s}
+  .card{position:relative;background:var(--surface);box-shadow:var(--sh-raise);border-radius:20px;padding:18px}
   .card + .card{margin-top:14px}
   .card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
   .card-h h3{font-size:.75em;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted)}
@@ -88,7 +83,7 @@
   .range-seg .rc{background:var(--surface-2);box-shadow:var(--sh-inset);border-radius:9px;padding:4px 9px;font-size:.66em;font-weight:600;letter-spacing:.5px;color:var(--muted);cursor:pointer}
   .range-seg .rc.sel{color:var(--fire);background:color-mix(in srgb,var(--fire) 14%,var(--surface-2));box-shadow:var(--sh-raise)}
 
-  .timer-card{--sc:var(--fire);text-align:center;padding:26px 18px 22px;box-shadow:var(--sh-card);background:radial-gradient(120% 90% at 50% 0%, color-mix(in srgb,var(--sc) 13%,transparent), transparent 55%), var(--surface);transition:background .6s,box-shadow .8s}
+  .timer-card{--sc:var(--fire);text-align:center;padding:26px 18px 22px;box-shadow:var(--sh-raise);background:radial-gradient(120% 90% at 50% 0%, color-mix(in srgb,var(--sc) 13%,transparent), transparent 55%), var(--surface);transition:background .6s}
   .ring-wrap{position:relative;width:262px;height:262px;margin:6px auto 4px;max-width:80vw;max-height:80vw;cursor:pointer}
   .ring-wrap svg{transform:rotate(-90deg);width:100%;height:100%}
   .ring-bg{fill:none;stroke:var(--surface-3);stroke-width:14}
@@ -328,91 +323,6 @@ function applyUI(){
   let resolved=ui.theme;
   if(resolved==='auto')resolved=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';
   $('#themeColor').setAttribute('content',resolved==='light'?'#f1f1ee':'#0a0a0c');
-  solarLight(); // sjene se po temi blago razlikuju
-}
-
-/* ====================== ŽIVO SVJETLO: pozicija Sunca iz sata/timezone ====== */
-// reprezentativne koordinate za česte IANA zone (permission-free proxy za lokaciju)
-const TZ_GEO={'Europe/Zagreb':[45.8,16.0],'Europe/Belgrade':[44.8,20.5],'Europe/Vienna':[48.2,16.4],
-  'Europe/Berlin':[52.5,13.4],'Europe/London':[51.5,-0.1],'Europe/Paris':[48.9,2.4],'Europe/Madrid':[40.4,-3.7],
-  'Europe/Rome':[41.9,12.5],'Europe/Athens':[38.0,23.7],'Europe/Moscow':[55.8,37.6],'America/New_York':[40.7,-74.0],
-  'America/Chicago':[41.9,-87.6],'America/Los_Angeles':[34.1,-118.2],'America/Sao_Paulo':[-23.5,-46.6],
-  'Asia/Tokyo':[35.7,139.7],'Asia/Shanghai':[31.2,121.5],'Asia/Kolkata':[28.6,77.2],'Asia/Dubai':[25.2,55.3],
-  'Australia/Sydney':[-33.9,151.2]};
-function geoFromTZ(){
-  try{const tz=Intl.DateTimeFormat().resolvedOptions().timeZone;if(TZ_GEO[tz])return TZ_GEO[tz];}catch(e){}
-  return [45, -new Date().getTimezoneOffset()/4]; // fallback: lat 45, lon iz UTC offseta
-}
-// Sunčeva elevacija (°) i azimut (° od sjevera, CW) — kompaktni NOAA-style izračun
-function sunPos(date,lat,lon){
-  const rad=Math.PI/180, deg=180/Math.PI;
-  const jd=date.getTime()/86400000+2440587.5, n=jd-2451545.0;
-  let L=(280.460+0.9856474*n)%360; if(L<0)L+=360;
-  let g=(357.528+0.9856003*n)%360; if(g<0)g+=360;
-  const lambda=(L+1.915*Math.sin(g*rad)+0.020*Math.sin(2*g*rad))*rad;
-  const eps=(23.439-0.0000004*n)*rad;
-  const decl=Math.asin(Math.sin(eps)*Math.sin(lambda));
-  let alpha=Math.atan2(Math.cos(eps)*Math.sin(lambda),Math.cos(lambda)); // RA
-  const gmst=(18.697374558+24.06570982441908*n)%24;
-  let lst=(gmst*15+lon)%360; if(lst<0)lst+=360; // local sidereal (°)
-  let H=(lst-alpha*deg)*rad; // hour angle
-  const phi=lat*rad;
-  const elev=Math.asin(Math.sin(phi)*Math.sin(decl)+Math.cos(phi)*Math.cos(decl)*Math.cos(H));
-  const az=Math.atan2(Math.sin(H),Math.cos(H)*Math.sin(phi)-Math.tan(decl)*Math.cos(phi)); // od sjevera, CW
-  let azd=(az*deg+180)%360; if(azd<0)azd+=360;
-  return {elev:elev*deg, az:azd};
-}
-let _solarTheme, _solarOverride=null; // _solarOverride: DEBUG, drži vrijeme sa slidera
-function solarLight(when){
-  const root=document.documentElement;
-  const light=(root.getAttribute('data-theme')==='light')||
-    (root.getAttribute('data-theme')!=='dark'&&window.matchMedia('(prefers-color-scheme: light)').matches);
-  const g=geoFromTZ(), sp=sunPos(_solarOverride||when||new Date(),g[0],g[1]);
-  const rad=Math.PI/180, baseY=light?10:6, blurBase=light?20:16, hiAmt=light?1:1;
-  let shx,shy,blur,hix,hiy;
-  if(sp.elev<=0){ // noć: meki ambient odozgo
-    shx=0; shy=baseY*0.7; blur=blurBase; hix=0; hiy=hiAmt;
-  }else{
-    const lowf=1-Math.min(sp.elev,60)/60;        // 1=nisko sunce, 0=visoko
-    const mag=4+lowf*9;                          // horizontalni doseg sjene
-    const shadowAz=(sp.az+180)*rad;              // sjena suprotno od sunca
-    shx=Math.sin(shadowAz)*mag;
-    shy=Math.max(2, baseY*(0.55+0.45*lowf) + Math.abs(Math.cos(shadowAz))*4); // uvijek > 0 (dolje)
-    blur=blurBase*(0.85+lowf*0.5);
-    const sunAz=sp.az*rad;                        // highlight prema suncu
-    hix=-Math.sin(sunAz)*1.6*hiAmt; hiy=-hiAmt;
-  }
-  root.style.setProperty('--shx',shx.toFixed(2));
-  root.style.setProperty('--shy',shy.toFixed(2));
-  root.style.setProperty('--shblur',blur.toFixed(2));
-  root.style.setProperty('--hix',hix.toFixed(2));
-  root.style.setProperty('--hiy',hiy.toFixed(2));
-  _solarTheme=light;
-  return sp;
-}
-
-/* ===== DEBUG: slider koji "mijenja vrijeme" (utječe samo na sjene/highlight). Maknuti kad nije više potreban. ===== */
-function mountSunDebug(){
-  if(document.getElementById('sunDebug'))return;
-  const box=document.createElement('div');
-  box.id='sunDebug';
-  box.style.cssText='position:fixed;left:0;right:0;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));z-index:90;background:var(--surface-2);'
-    +'box-shadow:0 -8px 24px -10px rgba(0,0,0,.6);padding:8px 14px;'
-    +'font:600 11px/1.3 var(--mono);color:var(--text);display:flex;align-items:center;gap:10px';
-  box.innerHTML='<span style="opacity:.7">☀︎ DEBUG</span>'
-    +'<input id="sunDebugRange" type="range" min="0" max="24" step="0.25" style="flex:1;accent-color:var(--fire)">'
-    +'<span id="sunDebugLbl" style="min-width:130px;text-align:right">live</span>';
-  document.body.appendChild(box);
-  const range=box.querySelector('#sunDebugRange'), lbl=box.querySelector('#sunDebugLbl');
-  const now=new Date(); range.value=now.getHours()+now.getMinutes()/60;
-  range.addEventListener('input',()=>{
-    const h=parseFloat(range.value), d=new Date();
-    d.setHours(Math.floor(h), Math.round((h%1)*60), 0, 0);
-    _solarOverride=d;
-    const sp=solarLight();
-    const hh=String(Math.floor(h)).padStart(2,'0'), mm=String(Math.round((h%1)*60)).padStart(2,'0');
-    lbl.textContent=hh+':'+mm+' · '+(sp.elev>0?'☀ ':'☾ ')+sp.elev.toFixed(0)+'° az'+sp.az.toFixed(0);
-  });
 }
 
 /* ============================ HOME VIEW (fast + history on one screen) ====== */
@@ -623,9 +533,6 @@ function render(tab){currentTab=tab;R[tab]();}
 
 Store.init();
 applyUI();
-solarLight();
-setInterval(solarLight,3e5); // sunce se miče sporo → svakih 5 min
-mountSunDebug(); // DEBUG: time slider — maknuti kad nije potreban
 $('#settingsBtn').onclick=openSettingsSheet;
 render('home');
 window.matchMedia('(prefers-color-scheme: light)').addEventListener('change',()=>{if(Store.settings().ui.theme==='auto')applyUI();});
