@@ -3,6 +3,11 @@
 Plan za pretvaranje NULA-e iz local-only appa u app s računom i sinkronizacijom.
 Odluka: **Firebase** (Auth + Cloud Firestore), potvrđeno 2026-06-12.
 
+> **Status (2026-06-12):** Kod je implementiran i feature-flagan — `Sync` modul,
+> login UI i sync badge postoje u `index.html`, ali su uspavani dok se
+> `FIREBASE_CONFIG` konstanta ne popuni configom iz konzole (checklist dolje).
+> PWA (manifest + service worker + ikone) je također dodan.
+
 ## Principi
 
 - **Local-first ostaje.** `localStorage` je i dalje primarni izvor; cloud je sync sloj.

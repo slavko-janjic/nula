@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#222429" id="themeColor">
+<link rel="manifest" href="manifest.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="NULA">
@@ -69,6 +70,9 @@
   .appbar{display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top) + 18px) 0 12px}
   .brand{display:flex;align-items:center;gap:9px}
   .brand b{font-weight:700;letter-spacing:1px;font-size:1.25em;text-shadow:0 1px 0 var(--press)}
+  .sync-badge{display:none;color:var(--muted-2);line-height:1;cursor:pointer}
+  .sync-badge.show{display:inline-flex}
+  .sync-badge.on{color:var(--good)} .sync-badge.err{color:var(--danger)}
   .iconbtn{width:42px;height:42px;border-radius:50%;background:var(--surface);box-shadow:var(--sh-raise);border:none;color:var(--muted);font-size:1.2em;line-height:1;cursor:pointer;display:grid;place-items:center;transition:color .2s,box-shadow .15s}
   .iconbtn:active{color:var(--fire);box-shadow:var(--sh-inset)}
   .add-btn{width:34px;height:34px;border-radius:50%;background:var(--surface);box-shadow:var(--sh-raise);border:none;color:var(--fire);font-size:1.25em;line-height:1;cursor:pointer;display:grid;place-items:center;transition:box-shadow .15s}
@@ -205,7 +209,7 @@
 <body>
 <div id="app">
   <header class="appbar">
-    <div class="brand"><b>NULA</b></div>
+    <div class="brand"><b>NULA</b><span class="sync-badge" id="syncBadge"></span></div>
     <button class="iconbtn" id="settingsBtn" aria-label="Settings">⚙️</button>
   </header>
   <div id="view"></div>
@@ -218,12 +222,12 @@
    STORE — jedini sloj koji dira podatke. Zamijeni unutrašnjost u v2 (API/sync).
    ========================================================================= */
 const Store=(function(){
-  const KEY='fasttrack:db', SCHEMA=1; let db=null, mem=false;
+  const KEY='nula:db', LEGACY_KEY='fasttrack:db', SCHEMA=2; let db=null, mem=false;
   const uuid=()=>(crypto.randomUUID?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==='x'?r:(r&0x3|0x8)).toString(16)}));
   const nowISO=()=>new Date().toISOString();
   const detectLang=()=>{const l=(navigator.language||'en').toLowerCase();return /^(hr|bs|sr|sh|me)/.test(l)?'hr':'en';};
   function defaults(){return{
-    schema:SCHEMA, user:{id:uuid(),name:'',createdAt:nowISO()},
+    schema:SCHEMA, user:{id:uuid(),name:'',uid:null,createdAt:nowISO()},
     settings:{protocol:'16:8',customHours:16,lang:detectLang(),
       ui:{theme:'auto'}},
     fasts:[], updatedAt:nowISO()
@@ -234,23 +238,115 @@ const Store=(function(){
     db.settings.ui=Object.assign({},d.settings.ui,db.settings.ui||{});
     if(!db.settings.lang) db.settings.lang=detectLang();
     db.fasts=db.fasts||[]; db.schema=SCHEMA;}
-  function load(){try{const raw=localStorage.getItem(KEY);db=raw?JSON.parse(raw):defaults();}catch(e){mem=true;db=defaults();}normalize();return db;}
+  function load(){try{const raw=localStorage.getItem(KEY)||localStorage.getItem(LEGACY_KEY);db=raw?JSON.parse(raw):defaults();}catch(e){mem=true;db=defaults();}normalize();save();return db;}
   function save(){db.updatedAt=nowISO();if(mem)return;try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){mem=true;}}
   return{
     uuid,nowISO,init:load,get db(){return db;},get memoryOnly(){return mem;},
-    user(){return db.user;}, setUserName(n){db.user.name=n;save();},
-    settings(){return db.settings;}, setSettings(p){Object.assign(db.settings,p);save();},
-    setUI(p){Object.assign(db.settings.ui,p);save();},
+    user(){return db.user;}, setUserName(n){db.user.name=n;save();Sync.pushMeta();},
+    settings(){return db.settings;}, setSettings(p){Object.assign(db.settings,p);save();Sync.pushMeta();},
+    setUI(p){Object.assign(db.settings.ui,p);save();Sync.pushMeta();},
+    setUid(uid){db.user.uid=uid;save();},
     activeFast(){return db.fasts.find(f=>f.status==='active')||null;},
-    startFast(h){if(this.activeFast())return null;const f={id:uuid(),startAt:nowISO(),endAt:null,targetHours:h,status:'active',energy:null,mood:null,note:'',createdAt:nowISO(),updatedAt:nowISO()};db.fasts.push(f);save();return f;},
-    endFast(id,patch){const f=db.fasts.find(x=>x.id===id);if(!f)return;f.endAt=nowISO();f.status='completed';if(patch)Object.assign(f,patch);f.updatedAt=nowISO();save();},
-    addFast(o){const f=Object.assign({id:uuid(),startAt:nowISO(),endAt:nowISO(),targetHours:16,status:'completed',energy:null,mood:null,note:'',createdAt:nowISO(),updatedAt:nowISO()},o);db.fasts.push(f);save();return f;},
-    updateFast(id,patch){const f=db.fasts.find(x=>x.id===id);if(!f)return;Object.assign(f,patch);f.updatedAt=nowISO();save();},
-    deleteFast(id){db.fasts=db.fasts.filter(x=>x.id!==id);save();},
+    startFast(h){if(this.activeFast())return null;const f={id:uuid(),startAt:nowISO(),endAt:null,targetHours:h,status:'active',energy:null,mood:null,note:'',createdAt:nowISO(),updatedAt:nowISO()};db.fasts.push(f);save();Sync.pushFast(f);return f;},
+    endFast(id,patch){const f=db.fasts.find(x=>x.id===id);if(!f)return;f.endAt=nowISO();f.status='completed';if(patch)Object.assign(f,patch);f.updatedAt=nowISO();save();Sync.pushFast(f);},
+    addFast(o){const f=Object.assign({id:uuid(),startAt:nowISO(),endAt:nowISO(),targetHours:16,status:'completed',energy:null,mood:null,note:'',createdAt:nowISO(),updatedAt:nowISO()},o);db.fasts.push(f);save();Sync.pushFast(f);return f;},
+    updateFast(id,patch){const f=db.fasts.find(x=>x.id===id);if(!f)return;Object.assign(f,patch);f.updatedAt=nowISO();save();Sync.pushFast(f);},
+    deleteFast(id){db.fasts=db.fasts.filter(x=>x.id!==id);save();Sync.delFast(id);},
     fasts(){return db.fasts.filter(f=>f.status!=='active').sort((a,b)=>new Date(b.startAt)-new Date(a.startAt));},
     export(){return JSON.stringify(db,null,2);},
-    import(json){const i=JSON.parse(json);if(!i.schema)throw new Error('bad');db=i;normalize();save();}
+    import(json){const i=JSON.parse(json);if(!i.schema)throw new Error('bad');db=i;normalize();save();Sync.pushAll();},
+    /* --- sync merge (poziva Sync modul) --- */
+    mergeRemoteFasts(cloudMap){const toUpload=[];
+      cloudMap.forEach((cf,id)=>{const lf=db.fasts.find(x=>x.id===id);
+        if(!lf)db.fasts.push(cf);
+        else if(new Date(cf.updatedAt)>new Date(lf.updatedAt))Object.assign(lf,cf);});
+      db.fasts.forEach(lf=>{const cf=cloudMap.get(lf.id);
+        if(!cf||new Date(lf.updatedAt)>new Date(cf.updatedAt))toUpload.push(lf);});
+      save();return toUpload;},
+    mergeRemoteMeta(d){if(!d||!d.updatedAt||new Date(d.updatedAt)<=new Date(db.updatedAt))return;
+      if(d.name)db.user.name=d.name;
+      if(d.settings){const ui=Object.assign({},db.settings.ui,d.settings.ui||{});Object.assign(db.settings,d.settings);db.settings.ui=ui;}
+      save();applyUI();},
+    applyRemoteFast(cf){const lf=db.fasts.find(x=>x.id===cf.id);
+      if(!lf){db.fasts.push(cf);save();return true;}
+      if(new Date(cf.updatedAt)>new Date(lf.updatedAt)){Object.assign(lf,cf);save();return true;}
+      return false;},
+    applyRemoteDelete(id){const n=db.fasts.length;db.fasts=db.fasts.filter(x=>x.id!==id);
+      if(db.fasts.length===n)return false;save();return true;}
   };
+})();
+
+/* =========================================================================
+   SYNC — Firebase Auth (Google) + Firestore. Aktivno SAMO ako je
+   FIREBASE_CONFIG postavljen; s null-om nema ni mrežnih poziva ni UI-ja.
+   Setup konzole: vidi docs/V2-SYNC.md. Ovdje zalijepi config objekt:
+   ========================================================================= */
+const FIREBASE_CONFIG=null; /* ← npr. {apiKey:"...",authDomain:"...",projectId:"...",...} */
+
+const Sync=(function(){
+  let fb=null,user=null,unsub=null,state='off'; // off|out|in|err
+  const has=()=>!!FIREBASE_CONFIG;
+  async function libs(){
+    if(fb)return fb;
+    const base='https://www.gstatic.com/firebasejs/11.6.0/';
+    const [app,auth,fs]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-firestore.js')]);
+    const a=app.initializeApp(FIREBASE_CONFIG);
+    fb={auth,fs,authI:auth.getAuth(a),db:fs.getFirestore(a)};
+    return fb;
+  }
+  const refs=()=>({
+    user:fb.fs.doc(fb.db,'users',user.uid),
+    fasts:fb.fs.collection(fb.db,'users',user.uid,'fasts'),
+    fast:id=>fb.fs.doc(fb.db,'users',user.uid,'fasts',id)});
+  async function start(){
+    if(!has())return;
+    try{
+      await libs();
+      fb.auth.onAuthStateChanged(fb.authI,async u=>{
+        user=u;
+        if(u){state='in';Store.setUid(u.uid);try{await merge();listen();}catch(e){state='err';}}
+        else{state='out';stop();}
+        updateSyncUI();renderHome();
+      });
+      fb.auth.getRedirectResult(fb.authI).catch(()=>{});
+    }catch(e){state='err';updateSyncUI();}
+  }
+  async function signIn(){
+    await libs();
+    const p=new fb.auth.GoogleAuthProvider();
+    try{await fb.auth.signInWithPopup(fb.authI,p);}
+    catch(e){if(e&&/popup/i.test(e.code||''))await fb.auth.signInWithRedirect(fb.authI,p);else throw e;}
+  }
+  const signOut=async()=>{if(fb)await fb.auth.signOut(fb.authI);};
+  async function merge(){
+    const r=refs(),snap=await fb.fs.getDocs(r.fasts);
+    const cloud=new Map();snap.forEach(d=>cloud.set(d.id,d.data()));
+    const up=Store.mergeRemoteFasts(cloud);
+    const us=await fb.fs.getDoc(r.user);
+    if(us.exists())Store.mergeRemoteMeta(us.data());
+    await Promise.all(up.map(f=>fb.fs.setDoc(r.fast(f.id),f,{merge:true})));
+    pushMeta();
+  }
+  function listen(){
+    stop();const r=refs();
+    unsub=fb.fs.onSnapshot(r.fasts,snap=>{
+      let chg=false;
+      snap.docChanges().forEach(ch=>{
+        if(ch.doc.metadata.hasPendingWrites)return;
+        if(ch.type==='removed')chg=Store.applyRemoteDelete(ch.doc.id)||chg;
+        else chg=Store.applyRemoteFast(ch.doc.data())||chg;});
+      if(chg)renderHome();
+    });
+  }
+  const stop=()=>{if(unsub){unsub();unsub=null;}};
+  const ok=()=>state==='in'&&fb;
+  const pushFast=f=>{if(ok())fb.fs.setDoc(refs().fast(f.id),f,{merge:true}).catch(()=>{});};
+  const delFast=id=>{if(ok())fb.fs.deleteDoc(refs().fast(id)).catch(()=>{});};
+  const pushMeta=()=>{if(!ok())return;const d=Store.db;
+    fb.fs.setDoc(refs().user,{name:d.user.name,settings:d.settings,schema:d.schema,updatedAt:d.updatedAt},{merge:true}).catch(()=>{});};
+  const pushAll=()=>{if(!ok())return;Store.db.fasts.forEach(pushFast);pushMeta();};
+  return{has,start,signIn,signOut,pushFast,delFast,pushMeta,pushAll,
+    get state(){return state;},get user(){return user;}};
 })();
 
 /* ============================ I18N ============================ */
@@ -263,6 +359,7 @@ const DICT={
     editFast:'Uredi fast',addFastTitle:'Dodaj fast',startTime:'Početak',endTime:'Kraj',deleteFastBtn:'Obriši fast',deleteFastConfirm:'Obrisati ovaj fast?',invalidRange:'Kraj mora biti nakon početka',
     overview:'Pregled',streakStat:'Streak',totalFasts:'Ukupno fastova',average:'Prosjek',goalsReached:'Cilj dostignut',today:'danas',fastHistory:'Povijest fasta',goalBadge:'cilj ✓',shortBadge:'kraće',noFasts:'Još nema završenih fastova.<br>Započni prvi gore.',
     nameNick:'Ime / nadimak',namePh:'npr. Pho',savedForGroups:'spremljen za buduće grupe',language:'Jezik',
+    account:'Račun',signInGoogle:'Prijava Googleom',signOutBtn:'Odjava',syncedAs:'Sinkronizirano',localOnly:'Podaci su spremljeni samo na ovom uređaju.',signInErr:'Prijava nije uspjela',
     data:'Podaci',exportBtn:'Export (backup JSON)',importBtn:'Import iz fajla',resetAll:'Resetiraj sve',memoryWarn:'Spremanje na disk nije dostupno u ovom pregledu — podaci se neće zadržati. Radi normalno kad je app hostan ili spremljen kao fajl.',
     footer:'NULA v1 · svatko za sebe',saved:'Spremljeno',
     elapsedLab:'proteklo',stFed:'Sito stanje',stSugar:'Šećer pada',stBurn:'Sagorijevanje masti',stKetosis:'Ketoza',stAuto:'Autofagija',
@@ -277,6 +374,7 @@ const DICT={
     editFast:'Edit fast',addFastTitle:'Add fast',startTime:'Start',endTime:'End',deleteFastBtn:'Delete fast',deleteFastConfirm:'Delete this fast?',invalidRange:'End must be after start',
     overview:'Overview',streakStat:'Streak',totalFasts:'Total fasts',average:'Average',goalsReached:'Goals reached',today:'today',fastHistory:'Fast history',goalBadge:'goal ✓',shortBadge:'short',noFasts:'No completed fasts yet.<br>Start your first one above.',
     nameNick:'Name / nickname',namePh:'e.g. Pho',savedForGroups:'saved for future groups',language:'Language',
+    account:'Account',signInGoogle:'Sign in with Google',signOutBtn:'Sign out',syncedAs:'Synced',localOnly:'Data is stored on this device only.',signInErr:'Sign-in failed',
     data:'Data',exportBtn:'Export (backup JSON)',importBtn:'Import from file',resetAll:'Reset everything',memoryWarn:'Disk storage is unavailable in this preview — data will not persist. Works normally once the app is hosted or saved as a file.',
     footer:'NULA v1 · solo mode',saved:'Saved',
     elapsedLab:'elapsed',stFed:'Fed',stSugar:'Sugar dropping',stBurn:'Fat burning',stKetosis:'Ketosis',stAuto:'Autophagy',
@@ -305,6 +403,10 @@ const ICONS={
   trash:'<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
   warn:'<path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
   plus:'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+  cloud:'<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>',
+  cloudoff:'<path d="M5.78 5.78A7 7 0 0 0 9 19h8.5a4.5 4.5 0 0 0 2.92-1.08"/><path d="M9.2 5.06A7 7 0 0 1 15.71 10h1.79a4.5 4.5 0 0 1 3.7 7.06"/><line x1="2" y1="2" x2="22" y2="22"/>',
+  logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
+  google:'<path fill="currentColor" stroke="none" d="M21.35 11.1H12v2.9h5.35c-.5 2.5-2.6 3.9-5.35 3.9a6 6 0 1 1 0-12c1.5 0 2.9.55 4 1.45l2.2-2.2A9 9 0 1 0 12 21c5.2 0 8.85-3.65 8.85-8.85 0-.6-.05-1.05-.15-1.55z"/>',
   mood0:'<circle cx="12" cy="12" r="9"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/><path d="M8.5 16.5s1.3-2.5 3.5-2.5 3.5 2.5 3.5 2.5"/>',
   mood1:'<circle cx="12" cy="12" r="9"/><line x1="9" y1="9.5" x2="9.01" y2="9.5"/><line x1="15" y1="9.5" x2="15.01" y2="9.5"/><path d="M9 15.5s1.3-1 3-1 3 1 3 1"/>',
   mood2:'<circle cx="12" cy="12" r="9"/><line x1="9" y1="9.5" x2="9.01" y2="9.5"/><line x1="15" y1="9.5" x2="15.01" y2="9.5"/><line x1="9" y1="15" x2="15" y2="15"/>',
@@ -312,6 +414,7 @@ const ICONS={
   mood4:'<circle cx="12" cy="12" r="9"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/><path d="M8 13.5s1.5 3 4 3 4-3 4-3"/>'
 };
 const I=(n,s=18)=>`<svg class="ic-svg" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const PROTOCOLS=[{id:'16:8',h:16},{id:'18:6',h:18},{id:'20:4',h:20},{id:'OMAD',h:23}];
 const STAGES=[{h:0,i:'utensils',k:'stFed'},{h:4,i:'tdown',k:'stSugar'},{h:12,i:'flame',k:'stBurn'},{h:16,i:'zap',k:'stKetosis'},{h:24,i:'recycle',k:'stAuto'}];
 const stageFor=h=>STAGES.reduce((a,s)=>h>=s.h?s:a,STAGES[0]);
@@ -340,6 +443,15 @@ function applyUI(){
   let resolved=ui.theme;
   if(resolved==='auto')resolved=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';
   $('#themeColor').setAttribute('content',resolved==='light'?'#e8ecf3':'#222429');
+}
+function updateSyncUI(){
+  const el=$('#syncBadge');if(!el)return;
+  if(!Sync.has()){el.className='sync-badge';el.innerHTML='';return;}
+  const s=Sync.state;
+  el.className='sync-badge show'+(s==='in'?' on':s==='err'?' err':'');
+  el.innerHTML=I(s==='in'?'cloud':'cloudoff',14);
+  el.title=s==='in'?(t('syncedAs')+' · '+(Sync.user?.email||'')):t('localOnly');
+  el.onclick=openSettingsSheet;
 }
 
 /* ============================ HOME VIEW (fast + history on one screen) ====== */
@@ -512,6 +624,13 @@ function openSettingsSheet(){
   openSheet(`<h2>${t('navSettings')}</h2>
     <label class="fl">${t('nameNick')}</label><input class="fi" id="nameIn" value="${u.name||''}" placeholder="${t('namePh')}">
     <div class="empty" style="text-align:left;padding:8px 0 0;font-size:.62em;color:var(--muted-2)">ID: ${u.id.slice(0,8)} · ${t('savedForGroups')}</div>
+    ${Sync.has()?`<label class="fl mt">${t('account')}</label>
+      ${Sync.user
+        ?`<div class="row" style="cursor:default"><div class="ic on" style="color:var(--good)">${I('cloud',17)}</div>
+            <div class="meta"><div class="t">${esc(Sync.user.displayName)}</div><div class="s">${t('syncedAs')} · ${esc(Sync.user.email)}</div></div></div>
+          <button class="btn btn-ghost" id="signOutBtn">${I('logout',15)} ${t('signOutBtn')}</button>`
+        :`<button class="btn btn-ghost" id="signInBtn">${I('google',15)} ${t('signInGoogle')}</button>
+          <div class="empty" style="text-align:left;padding:8px 0 0;font-size:.62em;color:var(--muted-2)">${t('localOnly')}</div>`}`:''}
     <label class="fl mt">${t('language')}</label>
     <div class="seg" id="langSeg">
       <div class="chip ${lang()==='hr'?'sel':''}" data-l="hr"><div class="name">HR</div></div>
@@ -529,9 +648,11 @@ function openSettingsSheet(){
     ${Store.memoryOnly?`<div class="empty" style="text-align:left;color:var(--warn);font-size:.62em;padding:10px 0 0">${I('warn',13)} ${t('memoryWarn')}</div>`:''}
     <div class="empty" style="padding:14px 8px 0;font-size:.62em">${t('footer')}</div>`);
   $('#nameIn').onchange=e=>{Store.setUserName(e.target.value.trim());toast(t('saved'));};
+  const si=$('#signInBtn');if(si)si.onclick=()=>Sync.signIn().then(openSettingsSheet).catch(e=>toast(t('signInErr')+': '+e.message));
+  const so=$('#signOutBtn');if(so)so.onclick=()=>Sync.signOut().then(openSettingsSheet);
   $('#langSeg').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{Store.setSettings({lang:c.dataset.l});applyUI();renderHome();openSettingsSheet();});
   $('#themeSeg').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{Store.setUI({theme:c.dataset.th});applyUI();renderHome();openSettingsSheet();});
-  $('#exportBtn').onclick=()=>{const b=new Blob([Store.export()],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='fasttrack-backup-'+dateKey(new Date())+'.json';a.click();};
+  $('#exportBtn').onclick=()=>{const b=new Blob([Store.export()],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='nula-backup-'+dateKey(new Date())+'.json';a.click();};
   $('#importBtn').onclick=()=>$('#importFile').click();
   $('#importFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{Store.import(r.result);applyUI();toast(t('saved')+' ✓');renderHome();openSettingsSheet();}catch(err){toast('Error: '+err.message);}};r.readAsText(f);};
   $('#resetBtn').onclick=openResetSheet;
@@ -547,7 +668,7 @@ function openResetSheet(){
   const inp=$('#resetIn'),go=$('#resetGo');
   inp.oninput=()=>{go.disabled=inp.value.trim().toUpperCase()!==word;};
   $('#resetCancel').onclick=closeSheet;
-  go.onclick=()=>{if(inp.value.trim().toUpperCase()!==word)return;try{localStorage.removeItem('fasttrack:db');}catch(e){}location.reload();};
+  go.onclick=()=>{if(inp.value.trim().toUpperCase()!==word)return;try{localStorage.removeItem('nula:db');localStorage.removeItem('fasttrack:db');}catch(e){}location.reload();};
 }
 
 /* ============================ NAV / SHEET / BOOT ============================ */
@@ -566,8 +687,12 @@ applyUI();
 $('#settingsBtn').innerHTML=I('gear',20);
 $('#settingsBtn').onclick=openSettingsSheet;
 renderHome();
+updateSyncUI();
+Sync.start();
 window.matchMedia('(prefers-color-scheme: light)').addEventListener('change',()=>{if(Store.settings().ui.theme==='auto')applyUI();});
 setInterval(tick,1000);
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
 </html>

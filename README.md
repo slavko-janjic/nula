@@ -2,7 +2,10 @@
 
 Jednostavan fasting tracker — web app koji radi na svakom mobitelu (iOS/Android), offline, bez instalacije i bez backenda. Svi podaci se spremaju lokalno na uređaju (`localStorage`).
 
-## Značajke (v1)
+## Značajke (v2)
+- 📲 **PWA** — instaliraj na home screen (Add to Home Screen), radi offline
+- ☁️ **Google prijava + sync** (Firebase, opcionalno) — bez prijave sve radi lokalno kao i prije; setup u `docs/V2-SYNC.md`
+
 - ⏱ Timer s prstenom napretka + protokoli (16:8, 18:6, 20:4, OMAD, custom do 240h)
 - 🧬 Faze fasta (sito stanje → šećer pada → sagorijevanje masti → ketoza → autofagija) na prstenu i vremenskoj traci
 - 📊 Pregled: streak, ukupan broj fastova, prosjek, dostignuti ciljevi
@@ -13,7 +16,13 @@ Jednostavan fasting tracker — web app koji radi na svakom mobitelu (iOS/Androi
 - ⬇️ Export/Import (JSON backup)
 
 ## Pokretanje
-Otvori `index.html` u pregledniku — to je sve. Jedan fajl, bez ovisnosti.
+Otvori `index.html` u pregledniku — to je sve. Bez builda i ovisnosti.
+Za PWA/offline (service worker) treba http(s) hosting — `file://` radi, ali bez instalacije na home screen.
+
+## Sync (opcionalno)
+Prođi checklist u `docs/V2-SYNC.md` (Firebase projekt, Google sign-in, Firestore + rules),
+pa zalijepi `firebaseConfig` u konstantu `FIREBASE_CONFIG` u `index.html`.
+Dok je `FIREBASE_CONFIG=null`, app je 100% lokalan — nema mrežnih poziva ni login UI-ja.
 
 ## Hosting (GitHub Pages)
 Settings → Pages → *Deploy from branch* → `main` / `root`.
