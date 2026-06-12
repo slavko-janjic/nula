@@ -1,35 +1,36 @@
 # ⭕ NULA
 
-Jednostavan fasting tracker — web app koji radi na svakom mobitelu (iOS/Android), offline, bez instalacije i bez backenda. Svi podaci se spremaju lokalno na uređaju (`localStorage`).
+Minimal fasting tracker — a web app that runs on any phone (iOS/Android), works offline, needs no install and no mandatory backend. Local-first: your data lives on your device (`localStorage`), with optional Google sign-in + cloud sync.
 
-## Značajke (v2)
-- 📲 **PWA** — instaliraj na home screen (Add to Home Screen), radi offline
-- ☁️ **Google prijava + sync** (Firebase, opcionalno) — bez prijave sve radi lokalno kao i prije; setup u `docs/V2-SYNC.md`
+**Live:** https://slavko-janjic.github.io/nula/
 
-- ⏱ Timer s prstenom napretka + protokoli (16:8, 18:6, 20:4, OMAD, custom do 240h)
-- 🧬 Faze fasta (sito stanje → šećer pada → sagorijevanje masti → ketoza → autofagija) na prstenu i vremenskoj traci
-- 📊 Pregled: streak, ukupan broj fastova, prosjek, dostignuti ciljevi
-- 🗓 Heat-mapa zadnjih 14 dana ili mjesečni kalendar
-- ✍️ Ručni unos, uređivanje i brisanje fastova + ocjena raspoloženja/energije
-- 🌐 HR / EN (prati jezik uređaja)
-- 🌗 Auto light/dark tema (prati temu uređaja)
+## Features (v2)
+- 📲 **PWA** — Add to Home Screen, works offline
+- ☁️ **Google sign-in + cloud sync** (Firebase, optional) — without an account everything stays local, exactly as before; setup guide in `docs/V2-SYNC.md`
+
+- ⏱ Timer with progress ring + protocols (16:8, 18:6, 20:4, OMAD, custom up to 240h)
+- 🧬 Fasting stages (fed → sugar dropping → fat burning → ketosis → autophagy) on the dial and the stage timeline
+- 📊 Overview: streak, total fasts, average duration, goals reached
+- 🗓 14-day heat map or monthly calendar
+- ✍️ Manual add, edit and delete of fasts + mood/energy rating
+- 🌐 EN / HR (follows device language)
+- 🌗 Auto light/dark theme (follows device theme), soft neumorphic UI
 - ⬇️ Export/Import (JSON backup)
 
-## Pokretanje
-Otvori `index.html` u pregledniku — to je sve. Bez builda i ovisnosti.
-Za PWA/offline (service worker) treba http(s) hosting — `file://` radi, ali bez instalacije na home screen.
+## Getting started
+Open `index.html` in a browser — that's it. No build step, no dependencies.
+PWA features (install, offline service worker) require http(s) hosting — `file://` works too, just without Add to Home Screen.
 
-## Sync (opcionalno)
-Prođi checklist u `docs/V2-SYNC.md` (Firebase projekt, Google sign-in, Firestore + rules),
-pa zalijepi `firebaseConfig` u konstantu `FIREBASE_CONFIG` u `index.html`.
-Dok je `FIREBASE_CONFIG=null`, app je 100% lokalan — nema mrežnih poziva ni login UI-ja.
+## Sync (optional)
+Walk through the checklist in `docs/V2-SYNC.md` (Firebase project, Google sign-in provider, Firestore + security rules), then paste your `firebaseConfig` into the `FIREBASE_CONFIG` constant in `index.html`.
+While `FIREBASE_CONFIG` is `null` the app is 100% local — no network calls and no login UI.
 
 ## Hosting (GitHub Pages)
 Settings → Pages → *Deploy from branch* → `main` / `root`.
-Link postaje: `https://<korisnik>.github.io/<repo>/`
+Your link becomes: `https://<user>.github.io/<repo>/`
 
 ## Roadmap
-- v2: grupe / povezivanje s frendovima (zahtijeva backend + sync)
+- v3: groups / connect with friends (if there's demand)
 
 ---
-Arhitektura je već "sync-ready": sav pristup podacima ide kroz `Store` modul, svaki zapis ima `id` + `createdAt`/`updatedAt` i schema verziju — za v2 se mijenja samo unutrašnjost `Store`-a (localStorage → API).
+Architecture: all data access goes through the `Store` module; every record carries `id` + `createdAt`/`updatedAt` and a schema version. Cloud sync is a thin layer on top — last-write-wins merge by `updatedAt`, live multi-device updates via Firestore `onSnapshot`.
