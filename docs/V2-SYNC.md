@@ -1,47 +1,51 @@
-# V2: Google login + sync (Firebase)
+# V2: Google sign-in + sync (Firebase)
 
-Plan za pretvaranje NULA-e iz local-only appa u app s računom i sinkronizacijom.
-Odluka: **Firebase** (Auth + Cloud Firestore), potvrđeno 2026-06-12.
+How NULA went from a local-only app to an app with optional account + sync.
+Decision: **Firebase** (Auth + Cloud Firestore), confirmed 2026-06-12.
 
-> **Status (2026-06-12):** Kod je implementiran i feature-flagan — `Sync` modul,
-> login UI i sync badge postoje u `index.html`, ali su uspavani dok se
-> `FIREBASE_CONFIG` konstanta ne popuni configom iz konzole (checklist dolje).
-> PWA (manifest + service worker + ikone) je također dodan.
+> **Status (2026-06-12): shipped and live.** The `Sync` module, login UI,
+> first-run splash and sync badge live in `index.html`. `FIREBASE_CONFIG`
+> is set (project `nula-fast`) and Google sign-in is verified in production.
+> PWA (manifest + service worker + icons) is shipped as well.
+> Setting `FIREBASE_CONFIG=null` reverts the app to 100% local mode.
 
-## Principi
+## Principles
 
-- **Local-first ostaje.** `localStorage` je i dalje primarni izvor; cloud je sync sloj.
-  App mora raditi identično bez prijave i offline.
-- **`Store` ostaje jedini sloj koji dira podatke** — sync se ugrađuje u njega,
-  UI se ne mijenja (osim login gumba u settingsima).
-- Jedna HTML datoteka, bez build stepa: Firebase se učitava kao ESM s CDN-a
+- **Local-first stays.** `localStorage` remains the primary source of truth;
+  the cloud is a sync layer. The app works identically signed-out and offline.
+- **`Store` remains the only layer that touches data** — sync is built into it;
+  the UI layer is unchanged (apart from the login UI in settings).
+- One HTML file, no build step: Firebase is lazy-loaded as ESM from the CDN
   (`https://www.gstatic.com/firebasejs/<ver>/firebase-app.js`, `-auth.js`, `-firestore.js`).
 
-## Arhitektura
+## Architecture
 
 ### Auth
-- Firebase Auth, **Google provider**, `signInWithPopup` (fallback `signInWithRedirect` za iOS standalone/PWA).
-- Odjavljen korisnik = današnje ponašanje (sve lokalno). Prijava je opcionalna.
-- UI: settings sheet dobiva "Prijavi se Googleom" / avatar + "Odjava".
+- Firebase Auth, **Google provider**, `signInWithPopup` (fallback
+  `signInWithRedirect` for iOS standalone/PWA).
+- Signed-out user = original behavior (everything local). Sign-in is optional.
+- UI: first-run splash (sign in / continue locally) + Account section in the
+  settings sheet (sign in / name + email + sign out) + cloud badge in the appbar.
 
-### Model u Firestoreu
+### Firestore data model
 ```
 users/{uid}                  → { name, settings, schema, updatedAt }
 users/{uid}/fasts/{fastId}   → { startAt, endAt, targetHours, status,
                                  energy, mood, note, createdAt, updatedAt }
 ```
-`fastId` = postojeći lokalni `id` (UUID) — nema remapiranja.
+`fastId` = the existing local `id` (UUID) — no remapping.
 
-### Sync algoritam (merge, ne overwrite)
-1. Na login: povuci sve `fasts` + user doc.
-2. Merge po `id`: zapis s novijim `updatedAt` pobjeđuje (last-write-wins).
-   Lokalni zapisi koji ne postoje u cloudu → upload; obrnuto → insert lokalno.
-3. Nakon inicijalnog mergea: svaka `Store` mutacija (start/end/add/update/delete)
-   piše lokalno **i** u Firestore (fire-and-forget, retry preko Firestore offline queuea).
-4. Brisanje: tombstone nije potreban za v2 solo-sync — brišemo doc direktno;
-   za buduće multi-device edge slučajeve dodati `deletedAt` polje (soft delete).
-5. `onSnapshot` listener na `fasts` kolekciju → live update ako je app otvoren
-   na dva uređaja.
+### Sync algorithm (merge, not overwrite)
+1. On login: fetch all `fasts` + the user doc.
+2. Merge by `id`: the record with the newer `updatedAt` wins (last-write-wins).
+   Local records missing in the cloud → upload; cloud-only → insert locally.
+3. After the initial merge: every `Store` mutation (start/end/add/update/delete)
+   writes locally **and** to Firestore (fire-and-forget; retries are handled by
+   Firestore's offline queue).
+4. Deletes: no tombstones needed for v2 solo sync — docs are deleted directly;
+   for future multi-device edge cases add a `deletedAt` field (soft delete).
+5. `onSnapshot` listener on the `fasts` collection → live updates when the app
+   is open on two devices (own pending writes are skipped).
 
 ### Firestore security rules
 ```
@@ -58,37 +62,32 @@ service cloud.firestore {
 }
 ```
 
-### Config u kodu
-Firebase web config (apiKey itd.) **nije tajna** — smije biti u `index.html`.
-Zaštita je u security rulesima + ograničenju API key-a na domenu.
+### Config in code
+The Firebase web config (apiKey etc.) is **not a secret** — it can live in
+`index.html`. Protection comes from the security rules + restricting the API
+key to your domains.
 
-## ✅ Checklist: što vlasnik repoa klikće (prije implementacije)
+## ✅ Console setup checklist (done for `nula-fast`; keep for re-setup)
 
-1. [ ] https://console.firebase.google.com → **Add project** (npr. `nula-app`),
-       Google Analytics nije potreban.
-2. [ ] **Build → Authentication → Get started → Sign-in method → Google → Enable**
-       (odaberi support email).
-3. [ ] **Authentication → Settings → Authorized domains**: dodaj
-       `slavko-janjic.github.io` (localhost je već unutra).
-4. [ ] **Build → Firestore Database → Create database** → production mode,
-       region `europe-west` (npr. `eur3`).
-5. [ ] Firestore → **Rules** → zalijepi rules odozgo → Publish.
-6. [ ] **Project settings (zupčanik) → General → Your apps → Web app (`</>`)**
-       → registriraj app (bez hostinga) → **kopiraj `firebaseConfig` objekt
-       u chat** kad krećemo s implementacijom.
-7. [ ] (Preporuka) Google Cloud konzola → Credentials → ograniči API key na
-       `slavko-janjic.github.io/*`.
+1. [x] https://console.firebase.google.com → **Add project**,
+       Google Analytics not needed.
+2. [x] **Build → Authentication → Get started → Sign-in method → Google → Enable**
+       (pick a support email).
+3. [x] **Authentication → Settings → Authorized domains**: add
+       `slavko-janjic.github.io` (localhost is pre-added).
+4. [x] **Build → Firestore Database → Create database** → production mode,
+       region `europe-west` (e.g. `eur3`).
+5. [x] Firestore → **Rules** → paste the rules above → Publish.
+6. [x] **Project settings (gear) → General → Your apps → Web app (`</>`)**
+       → register the app (no hosting) → copy the `firebaseConfig` object into
+       the `FIREBASE_CONFIG` constant in `index.html`.
+7. [x] Google Cloud console → Credentials → restrict the API key to websites.
+       ⚠️ Must include **all three**: `slavko-janjic.github.io/*`,
+       `nula-fast.firebaseapp.com/*`, `nula-fast.web.app/*` — the auth popup
+       handler runs on the firebaseapp.com domain and uses the same key;
+       omitting it breaks login with "The requested action is invalid."
 
-## Koraci implementacije (za iduću sesiju)
-
-1. `Store` dobiva async sync adapter (init/login/logout/merge/push/subscribe),
-   feature-flagan — bez configa app radi kao danas.
-2. Login UI u settings sheetu + indikator sync stanja (ikona oblačića uz brand).
-3. Merge logika + testovi ručno kroz Playwright (dva contexta = dva "uređaja").
-4. Schema bump na 2 (dodaje se `user.uid`, `deletedAt` polja po potrebi).
-5. README update (značajke, setup).
-
-## Izvan opsega v2
-- Grupe / dijeljenje s frendovima (v3 — model je spreman: kolekcija `groups`).
-- Push notifikacije, PWA manifest + service worker (kandidat za v2.1 da
-  "baš-baš app" bude instalabilan — zahtijeva samo manifest.json + sw.js).
+## Out of scope for v2
+- Groups / sharing with friends (v3 — the model is ready: a `groups` collection).
+- Push notifications.
+- Account deletion from the UI (add before any store/compliance needs).
