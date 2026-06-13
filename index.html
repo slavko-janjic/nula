@@ -62,12 +62,15 @@
     --press:rgba(255,255,255,.8);
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  ::-webkit-scrollbar{width:0;height:0;display:none}
+  .sheet{-ms-overflow-style:none;scrollbar-width:none}
   html,body{height:100%}
   body{
     background:var(--bg); color:var(--text);
     font-family:var(--display); font-weight:400;
     font-size:16px;
     overflow-x:hidden; -webkit-font-smoothing:antialiased;
+    -ms-overflow-style:none; scrollbar-width:none;
   }
   body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.03;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
@@ -699,10 +702,17 @@ function openResetSheet(){
 /* ============================ NAV / SHEET / BOOT ============================ */
 let sheetT;
 function openSheet(html){const sc=$('#scrim');clearTimeout(sheetT);sc.classList.remove('closing');
-  const sh=sc.querySelector('.sheet');
-  if(sc.classList.contains('show')&&sh){sh.innerHTML='<div class="grab"></div>'+html;}
-  else{sc.innerHTML=`<div class="sheet"><div class="grab"></div>${html}</div>`;sc.classList.add('show');}
+  let sh=sc.querySelector('.sheet');
+  if(sc.classList.contains('show')&&sh){sh.innerHTML='<div class="grab"></div>'+html;sh.style.transform='';}
+  else{sc.innerHTML=`<div class="sheet"><div class="grab"></div>${html}</div>`;sc.classList.add('show');sh=sc.querySelector('.sheet');attachSwipe(sh);}
   sc.onclick=e=>{if(e.target===sc)closeSheet();};}
+function attachSwipe(sh){let y0=0,dy=0,drag=false;
+  sh.addEventListener('touchstart',e=>{if(sh.scrollTop>0)return;y0=e.touches[0].clientY;drag=true;dy=0;},{passive:true});
+  sh.addEventListener('touchmove',e=>{if(!drag)return;dy=e.touches[0].clientY-y0;
+    if(dy<0){drag=false;sh.style.transform='';return;}
+    sh.style.transition='none';sh.style.transform='translateY('+dy+'px)';},{passive:true});
+  sh.addEventListener('touchend',()=>{if(!drag)return;drag=false;sh.style.transition='';
+    if(dy>110)closeSheet();else sh.style.transform='';});}
 function closeSheet(){const sc=$('#scrim');if(!sc.classList.contains('show'))return;
   sc.classList.remove('show');sc.classList.add('closing');
   clearTimeout(sheetT);sheetT=setTimeout(()=>{sc.classList.remove('closing');sc.innerHTML='';},230);}
