@@ -189,7 +189,7 @@
   .seg{display:flex;gap:6px;flex-wrap:wrap}
   .seg .chip{flex:1 0 auto;min-width:0}
 
-  .scrim{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
+  .scrim{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.35);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
   .scrim.show{opacity:1;pointer-events:auto}
   .scrim.closing .sheet{animation:down .22s cubic-bezier(.4,0,1,1) forwards}
   .sheet{background:var(--surface);box-shadow:0 -12px 40px -12px rgba(0,0,0,.6),inset 0 1px 0 var(--divider);border-radius:24px 24px 0 0;width:100%;max-width:480px;padding:22px 18px calc(env(safe-area-inset-bottom) + 22px);animation:up .28s cubic-bezier(.2,.8,.2,1);max-height:88vh;overflow-y:auto;overscroll-behavior:contain}
